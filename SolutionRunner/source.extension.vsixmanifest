@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
-  <Metadata>
-    <Identity Id="SolutionRunner.6f32920d-36a2-4d5b-915d-49fe0afc52de" Version="1.0" Language="en-US" Publisher="MTM-SCCM" />
-    <DisplayName>SolutionRunner</DisplayName>
-    <Description>Empty VSIX Project.</Description>
-    <Icon>Resources\Icon.png</Icon>
-    <PreviewImage>Resources\Icon.png</PreviewImage>
-  </Metadata>
-  <Installation>
-    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
-      <ProductArchitecture>amd64</ProductArchitecture>
-    </InstallationTarget>
-  </Installation>
-  <Prerequisites>
-    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,)" DisplayName="Visual Studio core editor" />
-  </Prerequisites>
-  <Assets>
-    <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
-  </Assets>
+    <Metadata>
+        <Identity Id="SolutionRunner.6f32920d-36a2-4d5b-915d-49fe0afc52de" Version="0.0.1" Language="en-US" Publisher="YehudaK" />
+        <DisplayName>SolutionRunner</DisplayName>
+        <Description xml:space="preserve">Easily Run Multi Project Solution.</Description>
+        <License>Resources\LICENSE.txt</License>
+        <Icon>Resources\Icon.png</Icon>
+        <PreviewImage>Resources\Icon.png</PreviewImage>
+        <Tags>solution, run, debug, micro service</Tags>
+    </Metadata>
+    <Installation>
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
+            <ProductArchitecture>amd64</ProductArchitecture>
+        </InstallationTarget>
+    </Installation>
+    <Prerequisites>
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,)" DisplayName="Visual Studio core editor" />
+    </Prerequisites>
+    <Assets>
+        <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+    </Assets>
 </PackageManifest>
