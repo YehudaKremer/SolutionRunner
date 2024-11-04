@@ -1,0 +1,170 @@
+﻿<UserControl x:Class="SolutionRunner.ToolWindows.Views.ProjectItemControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:imaging="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.Imaging"
+             xmlns:theming="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Imaging"
+             xmlns:util="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Utilities"
+             xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"         
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:platformUI="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:ViewModels="clr-namespace:SolutionRunner.ToolWindows.ViewModels"
+             xmlns:Views="clr-namespace:SolutionRunner.ToolWindows.Views"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             toolkit:Themes.UseVsTheme="True"
+             mc:Ignorable="d"
+             d:DesignWidth="350"
+             Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <d:ResourceDictionary Source="pack://application:,,,/SolutionRunner;component/ToolWindows/Themes/LightThemeResources.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/SolutionRunner;component/ToolWindows/Themes/SharedResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!--<SolidColorBrush x:Key="IndicatorForeground" Color="Red" />
+            <SolidColorBrush x:Key="IndicatorBackground" Color="WhiteSmoke" />-->
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <d:UserControl.DataContext>
+        <ViewModels:ProjectItemControlViewModel/>
+    </d:UserControl.DataContext>
+
+    <Grid MinHeight="26">
+        <Grid.Style>
+            <Style TargetType="Grid">
+                <Setter Property="Background" Value="Transparent" />
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.AccentMediumBrushKey}}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Style>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="18"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProjectItem.IsStartingOrStopping}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ProjectItem.IsStartingOrStopping}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+
+            <Views:DotCircleSpinnerControl />
+        </StackPanel>
+
+        <Image Grid.Column="0" Margin="5,0,0,0" Width="14" Height="14">
+            <Image.Style>
+                <Style TargetType="Image">
+                    <Setter Property="Source" Value="{DynamicResource RunOutlineNoColorImage}" />
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="True">
+                            <Setter Property="Source" Value="{DynamicResource RunImage}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ProjectItem.IsStartingOrStopping}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ProjectItem.IsStartingOrStopping}" Value="False">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Image.Style>
+        </Image>
+
+        <TextBlock Grid.Column="1" Text="{Binding ProjectItem.ProjectName}" Margin="5,5,15,5" VerticalAlignment="Center" TextWrapping="Wrap">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ButtonTextBrushKey}}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="True">
+                            <Setter Property="Foreground" Value="Green" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ProjectItem.HaveBuildError}" Value="True">
+                            <Setter Property="Foreground" Value="Red" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ProjectItem.IsStartingOrStopping}" Value="True">
+                            <Setter Property="Foreground" Value="Gray" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="5,0" VerticalAlignment="Center">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProjectItem.NumberOfErrors}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <Image Width="12" Height="12" Source="{DynamicResource StatusErrorImage}" />
+            <TextBlock Text="{Binding ProjectItem.NumberOfErrors}" FontSize="11" Margin="3,0,0,0" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="5,0" VerticalAlignment="Center">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProjectItem.NumberOfWarnings}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <Image Width="12" Height="12" Source="{DynamicResource StatusWarningImage}" />
+            <TextBlock Text="{Binding ProjectItem.NumberOfWarnings}" FontSize="11" Margin="3,0,0,0" />
+        </StackPanel>
+
+        <CheckBox Grid.Column="4" Margin="5,0" Width="58" IsThreeState="True" IsChecked="{Binding ProjectItem.IsChecked}" VerticalContentAlignment="Center">
+            <CheckBox.Content>
+                <TextBlock Text="{Binding ProjectItem.ProjectRunType}" />
+            </CheckBox.Content>
+        </CheckBox>
+
+        <StackPanel Grid.Column="5" Orientation="Horizontal" Margin="5,0" VerticalAlignment="Center">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Hidden" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=
+                               Grid, AncestorLevel=1}}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+
+            <Button Command="{Binding StartProjectCommand}" Style="{StaticResource ReusableButtonStyle}">
+                <Image Width="14" Height="14" Source="{DynamicResource RunImage}" />
+            </Button>
+
+            <Button Command="{Binding StopProjectCommand}" Style="{StaticResource ReusableButtonStyle}">
+                <Image Width="14" Height="14" Source="{DynamicResource Stop14Image}" />
+            </Button>
+        </StackPanel>
+
+    </Grid>
+</UserControl>

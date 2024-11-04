@@ -1,0 +1,317 @@
+﻿using CommunityToolkit.Mvvm.Input;
+using EnvDTE;
+using EnvDTE80;
+using Microsoft.VisualStudio.Threading;
+using SolutionRunner.ToolWindows.Models;
+using SolutionRunner.ToolWindows.Views;
+using System.IO;
+using System.IO.Pipes;
+using System.Linq;
+using System.Management;
+using System.Threading;
+using System.Threading.Tasks;
+using Process = System.Diagnostics.Process;
+
+namespace SolutionRunner.ToolWindows.ViewModels
+{
+    public class ProjectItemControlViewModel : System.IAsyncDisposable
+    {
+        public IAsyncRelayCommand StartProjectCommand { get; }
+        public IAsyncRelayCommand StopProjectCommand { get; }
+        private Task pollProcessesTask;
+        private readonly CancellationTokenSource cancellationTokenSource = new();
+        private Community.VisualStudio.Toolkit.OutputWindowPane output = null;
+        private NamedPipeClientStream pipeClient = null;
+        private readonly string[] logWarnKeywords = ["|warn", "| warn", "|warning", "| warning"];
+        private readonly string[] logErrorKeywords = ["|error", "| error", "|fatal", "| fatal"];
+
+        private ProjectModel projectItem;
+        public ProjectModel ProjectItem
+        {
+            get => projectItem;
+            set
+            {
+                projectItem = value;
+                pollProcessesTask = PollProcessesAsync(cancellationTokenSource.Token);
+
+                projectItem.PropertyChanged += (_, args) =>
+                {
+                    if (args.PropertyName == nameof(projectItem.IsRunning) || args.PropertyName == nameof(projectItem.IsStartingOrStopping))
+                    {
+                        StartProjectCommand.NotifyCanExecuteChanged();
+                        StopProjectCommand.NotifyCanExecuteChanged();
+                    }
+                };
+            }
+        }
+
+        public ProjectItemControlViewModel()
+        {
+            StartProjectCommand = new AsyncRelayCommand(StartProjectAsync, () => CanStartProject);
+            StopProjectCommand = new AsyncRelayCommand(StopProjectAsync, () => CanStopProject);
+        }
+
+        public async Task StartProjectAsync()
+        {
+            _ = TryConnectToLoggerNamedPipeAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            //await output.WriteLineAsync($"starting project");
+            ProjectItem.IsStartingOrStopping = true;
+            ProjectItem.NumberOfErrors = 0;
+            ProjectItem.NumberOfWarnings = 0;
+            var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
+            await SolutionRunnerWindowControlViewModel.WaitForBuildStateAsync(dte);
+
+            var buildSuccess = await ProjectItem.SolutionProject.BuildAsync(BuildAction.Build);
+            if (buildSuccess)
+            {
+                //await output.WriteLineAsync("build success");
+                ProjectItem.HaveBuildError = false;
+                await SolutionRunnerWindowControlViewModel.WaitForBuildStateAsync(dte);
+                dte.Solution.SolutionBuild.StartupProjects =
+                    new string[] { ProjectItem.SolutionProject.FullPath };
+
+                switch (ProjectItem.ProjectRunType)
+                {
+                    case RunType.Debug:
+                        dte.Solution.SolutionBuild.Debug();
+                        break;
+                    default:
+                        dte.Solution.SolutionBuild.Run();
+                        break;
+                }
+
+                // TODO: can we check for idle console so we can do something else?
+                _ = Task.Delay(5000).ContinueWith(async _ =>
+                {
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    ProjectItem.IsStartingOrStopping = false;
+                }, TaskScheduler.Default);
+            }
+            else
+            {
+                //await output.WriteLineAsync("fail to build");
+                ProjectItem.HaveBuildError = true;
+                ProjectItem.IsStartingOrStopping = false;
+            }
+        }
+        public bool CanStartProject => ProjectItem != null &&
+            !ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
+
+        public Task StopProjectAsync() => StopProjectAsync(false);
+        public async Task StopProjectAsync(bool closeAll)
+        {
+            ProjectItem.IsStartingOrStopping = true;
+            await StopProcessByProjectFullPathAsync(ProjectItem.SolutionProject.FullPath, closeAll);
+        }
+        public bool CanStopProject => ProjectItem != null &&
+            ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
+
+
+        private async Task PollProcessesAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                //await output.WriteLineAsync("start monitoring project");
+
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await TaskScheduler.Default;
+                    var runningProcesses = Process.GetProcessesByName(projectItem.ProjectName)
+                       .Where(p => !IsIISExpressProcess(p.Id))
+                       .ToList();
+
+                    var isRunning = runningProcesses.Any() ||
+                        IsIISExpressHostingProject(projectItem.ProjectName, out _);
+                    if (projectItem.IsRunning != isRunning)
+                    {
+                        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+                        ProjectItem.IsStartingOrStopping = false;
+                        projectItem.IsRunning = isRunning;
+                        if (isRunning)
+                        {
+                            _ = TryConnectToLoggerNamedPipeAsync();
+                        }
+                    }
+
+                    await Task.Delay(3000, cancellationToken);
+                }
+            }
+            catch (ObjectDisposedException) { }
+            catch (TaskCanceledException) { }
+            catch (OperationCanceledException) { }
+            catch (Exception error)
+            {
+                //await output.WriteLineAsync($"error: {error.Message}, stack trace: {error.StackTrace}");
+            }
+        }
+
+        private static bool IsIISExpressProcess(int processId)
+        {
+            try
+            {
+                var process = Process.GetProcessById(processId);
+                return process.ProcessName.Equals("iisexpress", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsIISExpressHostingProject(string projectName, out int iisExpressProcessId)
+        {
+            foreach (var processId in Process.GetProcessesByName("iisexpress").Select(i => i.Id))
+            {
+                string commandLine = GetCommandLine(processId);
+                if (commandLine.Contains($"site:\"{projectName}\""))
+                {
+                    iisExpressProcessId = processId;
+                    return true;
+                }
+            }
+            iisExpressProcessId = 0;
+            return false;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsync(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual async Task DisposeAsync(bool disposing)
+        {
+            cancellationTokenSource.Cancel();
+
+            // Ensure the task has completed before attempting to dispose
+            if (pollProcessesTask != null && (pollProcessesTask.IsCompleted || pollProcessesTask.IsCanceled || pollProcessesTask.IsFaulted))
+            {
+                pollProcessesTask.Dispose();
+            }
+            cancellationTokenSource.Dispose();
+
+            if (pipeClient != null)
+            {
+                pipeClient.Dispose();
+                pipeClient = null;
+            }
+
+            if (output != null)
+            {
+                await output.HideAsync();
+                output = null;
+            }
+        }
+
+        private async Task TryConnectToLoggerNamedPipeAsync()
+        {
+            if (pipeClient == null)
+            {
+                try
+                {
+                    pipeClient = new NamedPipeClientStream(".", $"SolutionRunner-{ProjectItem.ProjectName}", PipeDirection.In);
+                    await TaskScheduler.Default;
+                    //await output.WriteLineAsync(
+                    //    $"connecting to logger \"SolutionRunner-{ProjectItem.ProjectName}\"... (will close after 60s of initial inactivity)");
+                    await pipeClient.ConnectAsync(60000);
+                    //await output.WriteLineAsync($"logger \"SolutionRunner-{ProjectItem.ProjectName}\" connected.");
+
+                    var reader = new StreamReader(pipeClient);
+                    string line;
+                    while ((line = await reader.ReadLineAsync()) != null)
+                    {
+                        var lineLower = line.ToLower();
+                        var isNewOutput = output == null;
+                        output ??= await VS.Windows.CreateOutputWindowPaneAsync($"SolutionRunner - {projectItem.ProjectName}", true);
+
+                        if (isNewOutput)
+                        {
+                            await output.ActivateAsync();
+                        }
+
+                        if (Array.Exists(logErrorKeywords, lineLower.Contains))
+                        {
+                            await output.ActivateAsync();
+                            ProjectItem.NumberOfErrors++;
+                        }
+                        else if (Array.Exists(logWarnKeywords, lineLower.Contains))
+                        {
+                            ProjectItem.NumberOfWarnings++;
+                        }
+
+                        await output.WriteLineAsync(line);
+                    }
+
+                    reader.Dispose();
+                    pipeClient.Dispose();
+                    pipeClient = null;
+
+                }
+                catch (Exception error)
+                {
+                    if (pipeClient != null)
+                    {
+                        pipeClient.Dispose();
+                        pipeClient = null;
+                    }
+
+                    if (output != null)
+                    {
+                        await output.WriteLineAsync($"error: {error.Message}, stack trace: {error.StackTrace}");
+                    }
+                }
+
+                if (output != null && pipeClient != null && pipeClient.IsConnected)
+                {
+                    await output.WriteLineAsync($"logger SolutionRunner-{ProjectItem.ProjectName} closed.");
+                }
+            }
+        }
+
+        public static async Task StopProcessByProjectFullPathAsync(string projectFullPath, bool closeAll = false)
+        {
+            await TaskScheduler.Default;
+
+            try
+            {
+                // Stop processes by matching the window title with the project path
+                foreach (var process in Process.GetProcessesByName("VsDebugConsole"))
+                {
+                    var title = process.MainWindowTitle.Split(new[] { "bin" }, StringSplitOptions.None)[0];
+                    if (projectFullPath.StartsWith(title))
+                    {
+                        process.Kill();
+                    }
+                    else if (closeAll)
+                    {
+                        var parentProcessId = WindowHelper.GetParentProcessId(process.Id);
+                        if (parentProcessId == Process.GetCurrentProcess().Id) process.Kill();
+                    }
+                }
+
+                var projectName = Path.GetFileNameWithoutExtension(projectFullPath);
+                foreach (var process in Process.GetProcessesByName(projectName))
+                    process.Kill();
+
+                // Stop IIS Express processes that are associated with the project
+                foreach (var process in Process.GetProcessesByName("iisexpress"))
+                {
+                    string commandLine = GetCommandLine(process.Id);
+                    if (commandLine.Contains(projectName))
+                        process.Kill();
+                }
+            }
+            catch (Exception error)
+            {
+                await SolutionRunnerWindowControl.Output.WriteLineAsync($"Error: {error.Message} | StackTrace: {error.StackTrace}");
+            }
+        }
+
+        private static string GetCommandLine(int processId)
+        {
+            using var searcher = new ManagementObjectSearcher($"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {processId}");
+            return searcher.Get().Cast<ManagementObject>().FirstOrDefault()?["CommandLine"]?.ToString() ?? string.Empty;
+        }
+    }
+}

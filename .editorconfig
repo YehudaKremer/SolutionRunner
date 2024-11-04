@@ -1,0 +1,19 @@
+﻿[*.cs]
+
+# S1075: URIs should not be hardcoded
+dotnet_diagnostic.S1075.severity = none
+
+# S112: General or reserved exceptions should never be thrown
+dotnet_diagnostic.S112.severity = none
+
+# S125: Sections of code should not be commented out
+dotnet_diagnostic.S125.severity = none
+
+# S2094: Classes should not be empty
+dotnet_diagnostic.S2094.severity = none
+
+# S2486: Generic exceptions should not be ignored
+dotnet_diagnostic.S2486.severity = none
+
+# S108: Nested blocks of code should not be left empty
+dotnet_diagnostic.S108.severity = none
