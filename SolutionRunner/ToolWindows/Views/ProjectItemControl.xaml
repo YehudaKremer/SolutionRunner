@@ -38,7 +38,7 @@
                 <Setter Property="Background" Value="Transparent" />
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.AccentMediumBrushKey}}" />
+                        <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:TreeViewColors.SelectedItemInactiveBrushKey}}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
