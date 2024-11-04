@@ -78,11 +78,8 @@
     <Resource Include="Assets\Images\Dark\JSFixedLayoutApplication.png" />
     <Resource Include="Assets\Images\Dark\JSHubApplication.png" />
     <Resource Include="Assets\Images\Dark\Restart.png" />
-    <Resource Include="Assets\Images\Dark\Restart14.png" />
     <Resource Include="Assets\Images\Dark\Run.png" />
-    <Resource Include="Assets\Images\Dark\Run16.png" />
     <Resource Include="Assets\Images\Dark\RunAll.png" />
-    <Resource Include="Assets\Images\Dark\RunOutline.png" />
     <Resource Include="Assets\Images\Dark\RunOutlineNoColor.png" />
     <Resource Include="Assets\Images\Dark\StatusError.png" />
     <Resource Include="Assets\Images\Dark\StatusWarning.png" />
@@ -91,11 +88,8 @@
     <Resource Include="Assets\Images\Light\JSFixedLayoutApplication.png" />
     <Resource Include="Assets\Images\Light\JSHubApplication.png" />
     <Resource Include="Assets\Images\Light\Restart.png" />
-    <Resource Include="Assets\Images\Light\Restart14.png" />
     <Resource Include="Assets\Images\Light\Run.png" />
-    <Resource Include="Assets\Images\Light\Run16.png" />
     <Resource Include="Assets\Images\Light\RunAll.png" />
-    <Resource Include="Assets\Images\Light\RunOutline.png" />
     <Resource Include="Assets\Images\Light\RunOutlineNoColor.png" />
     <Resource Include="Assets\Images\Light\StatusError.png" />
     <Resource Include="Assets\Images\Light\StatusWarning.png" />
