@@ -1,9 +1,7 @@
 ﻿using Microsoft.VisualStudio.Imaging;
-using Microsoft.VisualStudio.PlatformUI;
 using SolutionRunner.ToolWindows.Models;
 using SolutionRunner.ToolWindows.ViewModels;
 using System.Linq;
-using System.Windows;
 using System.Windows.Controls;
 
 namespace SolutionRunner.ToolWindows.Views
@@ -13,14 +11,10 @@ namespace SolutionRunner.ToolWindows.Views
         private bool isSolutionOpened;
         private bool extensionVesionChecked;
         public static OutputWindowPane Output { get; private set; }
-        public static bool IsDarkTheme { get; private set; }
 
         public SolutionRunnerWindowControl()
         {
-            VSColorTheme.ThemeChanged += e => OnThemeChanged(null);
-
             InitializeComponent();
-            OnThemeChanged(null);
             ((SolutionRunnerWindowControlViewModel)DataContext).CurrentPage = this;
             _ = InitializeOutputWindowPaneAsync();
             _ = RegisterEventsWhenSolutionOpenAsync();
@@ -221,55 +215,6 @@ namespace SolutionRunner.ToolWindows.Views
             catch (Exception error)
             {
                 await Output.WriteLineAsync($"Error while checking for new version: {error.Message} | StackTrace: {error.StackTrace}");
-            }
-        }
-
-        public static bool GetIsDarkTheme()
-        {
-            var shellSettingsManager = new Microsoft.VisualStudio.Shell.Settings.ShellSettingsManager(ServiceProvider.GlobalProvider);
-            var store = shellSettingsManager.GetReadOnlySettingsStore(Microsoft.VisualStudio.Settings.SettingsScope.UserSettings);
-            var theme = store.GetString("Theme", "BackupThemeId", string.Empty);
-            var isDarkTheme = theme == "{1ded0138-47ce-435e-84ef-9ec1f439b749}";
-            return isDarkTheme;
-        }
-
-#pragma warning disable S1172 // Unused method parameters should be removed
-#pragma warning disable IDE0060 // Remove unused parameter
-        private void OnThemeChanged(ThemeChangedEventArgs e)
-#pragma warning restore IDE0060 // Remove unused parameter
-#pragma warning restore S1172 // Unused method parameters should be removed
-        {
-            IsDarkTheme = GetIsDarkTheme();
-
-            RemoveThemeResourceDictionaries();
-
-            if (IsDarkTheme)
-            {
-                Resources.MergedDictionaries.Add(new ResourceDictionary
-                {
-                    Source = new Uri("pack://application:,,,/SolutionRunner;component/ToolWindows/Themes/DarkThemeResources.xaml")
-                });
-            }
-            else
-            {
-                Resources.MergedDictionaries.Add(new ResourceDictionary
-                {
-                    Source = new Uri("pack://application:,,,/SolutionRunner;component/ToolWindows/Themes/LightThemeResources.xaml")
-                });
-            }
-        }
-
-        private void RemoveThemeResourceDictionaries()
-        {
-            for (int i = Resources.MergedDictionaries.Count - 1; i >= 0; i--)
-            {
-                var dictionary = Resources.MergedDictionaries[i];
-                if (dictionary.Source != null &&
-                   (dictionary.Source.ToString().Contains("DarkThemeResources.xaml") ||
-                    dictionary.Source.ToString().Contains("LightThemeResources.xaml")))
-                {
-                    Resources.MergedDictionaries.RemoveAt(i);
-                }
             }
         }
     }

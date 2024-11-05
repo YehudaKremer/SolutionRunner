@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:imaging="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.Imaging"
-             xmlns:theming="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Imaging"
+             xmlns:imagecatalog="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.ImageCatalog"
+             xmlns:theming="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Imaging"             
              xmlns:util="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Utilities"
              xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"         
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
@@ -15,15 +16,42 @@
              mc:Ignorable="d"
              d:DesignHeight="300" 
              d:DesignWidth="350"
-             Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
+             Background="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowBackgroundBrushKey}}"
+             Foreground="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowTextBrushKey}}"
              Name="SolutionRunnerWindow">
 
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <d:ResourceDictionary Source="pack://application:,,,/SolutionRunner;component/ToolWindows/Themes/LightThemeResources.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/SolutionRunner;component/ToolWindows/Themes/SharedResources.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/SolutionRunner;component/ToolWindows/Styles/SharedResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <Style x:Key="ReusableButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.CommandBarGradientBrushKey}}" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" 
+                 BorderThickness="{TemplateBinding BorderThickness}" Padding="2">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.CommandBarBorderBrushKey}}" />
+                        <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.CommandBarMouseOverBackgroundGradientBrushKey}}" />
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.CommandBarMouseDownBackgroundGradientBrushKey}}" />
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" Value="0.5" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -45,24 +73,31 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="4,2" UseLayoutRounding="True">
-                <Button Name="StartButton" Command="{Binding StartAllSelectedProjectsCommand}" ToolTip="Start All Selected Projects" Style="{StaticResource ReusableButtonStyle}">
-                    <Image x:Name="StartButtonIcon" Width="16" Height="16" Source="{DynamicResource RunAllImage}" />
+            <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="4,2">
+                <Button x:Name="StartButton" Command="{Binding StartAllSelectedProjectsCommand}" ToolTip="Start All Selected Projects" Style="{StaticResource ReusableButtonStyle}">
+                    <imaging:CrispImage Moniker="{x:Static imagecatalog:KnownMonikers.RunAll}" 
+                                         theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=StartButton, Converter={StaticResource BrushToColorConverter}}"/>
                 </Button>
 
-                <Button Name="StopAllProjectsButton" Command="{Binding StopAllProjectsCommand}" ToolTip="Stop All Running Projects (0)" Style="{StaticResource ReusableButtonStyle}">
-                    <Image Width="16" Height="16" Source="{DynamicResource StopImage}" />
+                <Button x:Name="StopAllProjectsButton" Command="{Binding StopAllProjectsCommand}" ToolTip="Stop All Running Projects (0)" Style="{StaticResource ReusableButtonStyle}">
+                    <imaging:CrispImage Moniker="{x:Static imagecatalog:KnownMonikers.Stop}"
+                                        theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=StopAllProjectsButton, Converter={StaticResource BrushToColorConverter}}"/>
                 </Button>
 
                 <Rectangle Width="1" Margin="4,1" Fill="{DynamicResource {x:Static platformUI:EnvironmentColors.CommandBarToolBarSeparatorBrushKey}}" />
 
-                <Button Command="{Binding ShowAllProcessesButton_ClickCommand}" ToolTip="Show All Running Processes" Style="{StaticResource ReusableButtonStyle}">
-                    <Image Width="16" Height="16" Source="{DynamicResource JSHubApplicationImage}"/>
+                <Button x:Name="ShowAllProcessesButton" Command="{Binding ShowAllProcessesButton_ClickCommand}" ToolTip="Show All Running Processes" Style="{StaticResource ReusableButtonStyle}">
+                    <imaging:CrispImage Moniker="{x:Static imagecatalog:KnownMonikers.JSHubApplication}"
+                                        theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=ShowAllProcessesButton, Converter={StaticResource BrushToColorConverter}}"/>
                 </Button>
 
-                <Button Command="{Binding MinimizeAllProcessesButton_ClickCommand}" ToolTip="Minimize All Running Processes" Style="{StaticResource ReusableButtonStyle}">
-                    <Image Width="16" Height="16" Source="{DynamicResource JSFixedLayoutApplicationImage}" />
+                <Button x:Name="MinimizeAllProcessesButton" Command="{Binding MinimizeAllProcessesButton_ClickCommand}" ToolTip="Minimize All Running Processes" Style="{StaticResource ReusableButtonStyle}">
+                    <imaging:CrispImage Moniker="{x:Static imagecatalog:KnownMonikers.JSFixedLayoutApplication}"
+                                        theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=MinimizeAllProcessesButton, Converter={StaticResource BrushToColorConverter}}"/>
                 </Button>
+                <!--<d:Button Style="{StaticResource ReusableButtonStyle}">
+                    <d:Image Width="14" Height="14" Source="/SolutionRunner;component/Assets/DesignTimeImages/JSFixedLayoutApplication.png" />
+                </d:Button>-->
             </StackPanel>
 
             <!--<StackPanel Orientation="Horizontal" Grid.Column="1">

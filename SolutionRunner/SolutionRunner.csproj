@@ -75,26 +75,15 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\Images\Dark\JSFixedLayoutApplication.png" />
-    <Resource Include="Assets\Images\Dark\JSHubApplication.png" />
-    <Resource Include="Assets\Images\Dark\Restart.png" />
-    <Resource Include="Assets\Images\Dark\Run.png" />
-    <Resource Include="Assets\Images\Dark\RunAll.png" />
-    <Resource Include="Assets\Images\Dark\RunOutlineNoColor.png" />
-    <Resource Include="Assets\Images\Dark\StatusError.png" />
-    <Resource Include="Assets\Images\Dark\StatusWarning.png" />
-    <Resource Include="Assets\Images\Dark\Stop.png" />
-    <Resource Include="Assets\Images\Dark\Stop14.png" />
-    <Resource Include="Assets\Images\Light\JSFixedLayoutApplication.png" />
-    <Resource Include="Assets\Images\Light\JSHubApplication.png" />
-    <Resource Include="Assets\Images\Light\Restart.png" />
-    <Resource Include="Assets\Images\Light\Run.png" />
-    <Resource Include="Assets\Images\Light\RunAll.png" />
-    <Resource Include="Assets\Images\Light\RunOutlineNoColor.png" />
-    <Resource Include="Assets\Images\Light\StatusError.png" />
-    <Resource Include="Assets\Images\Light\StatusWarning.png" />
-    <Resource Include="Assets\Images\Light\Stop.png" />
-    <Resource Include="Assets\Images\Light\Stop14.png" />
+    <Content Include="Assets\DesignTimeImages\JSFixedLayoutApplication.png" />
+    <Content Include="Assets\DesignTimeImages\JSHubApplication.png" />
+    <Content Include="Assets\DesignTimeImages\Restart.png" />
+    <Content Include="Assets\DesignTimeImages\Run.png" />
+    <Content Include="Assets\DesignTimeImages\RunAll.png" />
+    <Content Include="Assets\DesignTimeImages\RunOutlineNoColor.png" />
+    <Content Include="Assets\DesignTimeImages\StatusError.png" />
+    <Content Include="Assets\DesignTimeImages\StatusWarning.png" />
+    <Content Include="Assets\DesignTimeImages\Stop.png" />
     <Content Include="Resources\LICENSE.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
@@ -118,15 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ToolWindows\SolutionRunnerWindow.cs" />
-    <Resource Include="ToolWindows\Themes\DarkThemeResources.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Resource>
-    <Resource Include="ToolWindows\Themes\LightThemeResources.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Resource>
-    <Resource Include="ToolWindows\Themes\SharedResources.xaml">
+    <Resource Include="ToolWindows\Styles\SharedResources.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Resource>
