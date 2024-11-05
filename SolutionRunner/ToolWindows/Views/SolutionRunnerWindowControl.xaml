@@ -59,8 +59,7 @@
         <ViewModels:SolutionRunnerWindowControlViewModel/>
     </UserControl.DataContext>
 
-    <!--TODO delete RootGrid name-->
-    <Grid x:Name="RootGrid">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -86,12 +85,12 @@
 
                 <Rectangle Width="1" Margin="4,1" Fill="{DynamicResource {x:Static platformUI:EnvironmentColors.CommandBarToolBarSeparatorBrushKey}}" />
 
-                <Button x:Name="ShowAllProcessesButton" Command="{Binding ShowAllProcessesButton_ClickCommand}" ToolTip="Show All Running Processes" Style="{StaticResource ReusableButtonStyle}">
+                <Button x:Name="ShowAllProcessesButton" Command="{Binding ShowAllProcessesCommand}" ToolTip="Show All Running Processes" Style="{StaticResource ReusableButtonStyle}">
                     <imaging:CrispImage Moniker="{x:Static imagecatalog:KnownMonikers.JSHubApplication}"
                                         theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=ShowAllProcessesButton, Converter={StaticResource BrushToColorConverter}}"/>
                 </Button>
 
-                <Button x:Name="MinimizeAllProcessesButton" Command="{Binding MinimizeAllProcessesButton_ClickCommand}" ToolTip="Minimize All Running Processes" Style="{StaticResource ReusableButtonStyle}">
+                <Button x:Name="MinimizeAllProcessesButton" Command="{Binding MinimizeAllProcessesCommand}" ToolTip="Minimize All Running Processes" Style="{StaticResource ReusableButtonStyle}">
                     <imaging:CrispImage Moniker="{x:Static imagecatalog:KnownMonikers.JSFixedLayoutApplication}"
                                         theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=MinimizeAllProcessesButton, Converter={StaticResource BrushToColorConverter}}"/>
                 </Button>

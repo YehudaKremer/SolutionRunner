@@ -17,7 +17,9 @@ namespace SolutionRunner.ToolWindows.ViewModels
     public class ProjectItemControlViewModel : System.IAsyncDisposable
     {
         public IAsyncRelayCommand StartProjectCommand { get; }
+        public IAsyncRelayCommand RestartProjectCommand { get; }
         public IAsyncRelayCommand StopProjectCommand { get; }
+        public IAsyncRelayCommand ShowProcessCommand { get; }
         private Task pollProcessesTask;
         private readonly CancellationTokenSource cancellationTokenSource = new();
         private Community.VisualStudio.Toolkit.OutputWindowPane output = null;
@@ -39,7 +41,9 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     if (args.PropertyName == nameof(projectItem.IsRunning) || args.PropertyName == nameof(projectItem.IsStartingOrStopping))
                     {
                         StartProjectCommand.NotifyCanExecuteChanged();
+                        RestartProjectCommand.NotifyCanExecuteChanged();
                         StopProjectCommand.NotifyCanExecuteChanged();
+                        ShowProcessCommand.NotifyCanExecuteChanged();
                     }
                 };
             }
@@ -48,8 +52,18 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public ProjectItemControlViewModel()
         {
             StartProjectCommand = new AsyncRelayCommand(StartProjectAsync, () => CanStartProject);
+            RestartProjectCommand = new AsyncRelayCommand(RestartProjectAsync, () => CanRestartProject);
             StopProjectCommand = new AsyncRelayCommand(StopProjectAsync, () => CanStopProject);
+            ShowProcessCommand = new AsyncRelayCommand(ShowProcessAsync, () => CanStopProject);
         }
+
+        private async Task RestartProjectAsync()
+        {
+            await StopProjectAsync();
+            await StartProjectAsync();
+        }
+        public bool CanRestartProject => ProjectItem != null &&
+            ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
 
         public async Task StartProjectAsync()
         {
@@ -107,6 +121,33 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public bool CanStopProject => ProjectItem != null &&
             ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
 
+        private async Task ShowProcessAsync()
+        {
+            var projectFullPath = ProjectItem.SolutionProject.FullPath;
+
+            await TaskScheduler.Default;
+
+            try
+            {
+                foreach (var process in Process.GetProcessesByName("VsDebugConsole"))
+                {
+                    var title = process.MainWindowTitle.Split(new[] { "bin" }, StringSplitOptions.None)[0];
+                    if (projectFullPath.StartsWith(title))
+                    {
+                        WindowHelper.BringProcessToFront(process);
+                        return;
+                    }
+                }
+
+                var projectName = Path.GetFileNameWithoutExtension(projectFullPath);
+                foreach (var process in Process.GetProcessesByName(projectName))
+                    WindowHelper.BringProcessToFront(process);
+            }
+            catch (Exception error)
+            {
+                await SolutionRunnerWindowControl.Output.WriteLineAsync($"Error: {error.Message} | StackTrace: {error.StackTrace}");
+            }
+        }
 
         private async Task PollProcessesAsync(CancellationToken cancellationToken)
         {

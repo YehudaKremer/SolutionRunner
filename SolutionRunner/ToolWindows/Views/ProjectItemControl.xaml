@@ -186,14 +186,46 @@
                 </Style>
             </StackPanel.Style>
 
-            <Button x:Name="StartProjectButton" Command="{Binding StartProjectCommand}" Style="{StaticResource ReusableButtonStyle}">
+            <Button x:Name="StartProjectButton" Command="{Binding StartProjectCommand}" ToolTip="Start Project">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ReusableButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                
                 <imaging:CrispImage Width="14" Height="14" Moniker="{x:Static imagecatalog:KnownMonikers.Run}"
                                     theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=StartProjectButton, Converter={StaticResource BrushToColorConverter}}"/>
             </Button>
 
-            <Button x:Name="StopProjectButton" Command="{Binding StopProjectCommand}" Style="{StaticResource ReusableButtonStyle}">
+            <Button x:Name="RestartProjectButton" Command="{Binding RestartProjectCommand}" ToolTip="Restart Project">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ReusableButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+
+                <imaging:CrispImage Width="14" Height="14" Moniker="{x:Static imagecatalog:KnownMonikers.Restart}"
+                                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=StartProjectButton, Converter={StaticResource BrushToColorConverter}}"/>
+            </Button>
+
+            <Button x:Name="StopProjectButton" Command="{Binding StopProjectCommand}" Style="{StaticResource ReusableButtonStyle}" ToolTip="Stop Project">
                 <imaging:CrispImage Width="14" Height="14" Moniker="{x:Static imagecatalog:KnownMonikers.Stop}"
                                     theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=StopProjectButton, Converter={StaticResource BrushToColorConverter}}"/>
+            </Button>
+
+            <Button x:Name="ShowProcessButton" Command="{Binding ShowProcessCommand}" Style="{StaticResource ReusableButtonStyle}" ToolTip="Show Process">
+                <imaging:CrispImage Width="14" Height="14" Moniker="{x:Static imagecatalog:KnownMonikers.JSHubApplication}"
+                                theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=ShowProcessButton, Converter={StaticResource BrushToColorConverter}}"/>
             </Button>
         </StackPanel>
 

@@ -15,8 +15,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
     {
         public IAsyncRelayCommand StartAllSelectedProjectsCommand { get; }
         public IAsyncRelayCommand StopAllProjectsCommand { get; }
-        public IRelayCommand ShowAllProcessesButton_ClickCommand { get; }
-        public IRelayCommand MinimizeAllProcessesButton_ClickCommand { get; }
+        public IRelayCommand ShowAllProcessesCommand { get; }
+        public IRelayCommand MinimizeAllProcessesCommand { get; }
         public ObservableCollection<ProjectItemControlViewModel> Projects { get; set; } = [];
         public SolutionRunnerWindowControl CurrentPage { get; set; }
 
@@ -24,13 +24,15 @@ namespace SolutionRunner.ToolWindows.ViewModels
         {
             StartAllSelectedProjectsCommand = new AsyncRelayCommand(StartAllSelectedProjectsAsync, () => CanStartSelectedProjects);
             StopAllProjectsCommand = new AsyncRelayCommand(StopAllProjectsAsync, () => CanStopAllProjects);
-            ShowAllProcessesButton_ClickCommand = new RelayCommand(ShowAllProcessesButton_Click);
-            MinimizeAllProcessesButton_ClickCommand = new RelayCommand(MinimizeAllProcessesButton_Click);
+            ShowAllProcessesCommand = new RelayCommand(ShowAllProcesses, () => CanStopAllProjects);
+            MinimizeAllProcessesCommand = new RelayCommand(MinimizeAllProcesses, () => CanStopAllProjects);
 
             Projects.CollectionChanged += (_, _) =>
             {
                 StartAllSelectedProjectsCommand.NotifyCanExecuteChanged();
                 StopAllProjectsCommand.NotifyCanExecuteChanged();
+                ShowAllProcessesCommand.NotifyCanExecuteChanged();
+                MinimizeAllProcessesCommand.NotifyCanExecuteChanged();
             };
         }
 
@@ -113,9 +115,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public bool CanStopAllProjects => Projects
             .Any(p => p.ProjectItem.IsRunning && !p.ProjectItem.IsStartingOrStopping);
 
-        private static void ShowAllProcessesButton_Click() => WindowHelper.BringAllProcessesToFrontAndArrangeSideBySide();
-
-        private static void MinimizeAllProcessesButton_Click() => WindowHelper.MinimizeAllProcessesWindows();
+        private static void ShowAllProcesses() => WindowHelper.BringAllProcessesToFrontAndArrangeSideBySide();
+        private static void MinimizeAllProcesses() => WindowHelper.MinimizeAllProcessesWindows();
 
         public static async Task<IEnumerable<Project>> LoadProjectsAsync()
         {

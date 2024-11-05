@@ -129,10 +129,13 @@ namespace SolutionRunner.ToolWindows.Views
                             {
                                 if (args.PropertyName == nameof(projectItem.IsRunning) ||
                                     args.PropertyName == nameof(projectItem.IsStartingOrStopping) ||
-                                    args.PropertyName == nameof(projectItem.ProjectRunType))
+                                    args.PropertyName == nameof(projectItem.ProjectRunType) ||
+                                    args.PropertyName == nameof(projectItem.SolutionProject))
                                 {
                                     solutionRunnerViewModel.StartAllSelectedProjectsCommand.NotifyCanExecuteChanged();
                                     solutionRunnerViewModel.StopAllProjectsCommand.NotifyCanExecuteChanged();
+                                    solutionRunnerViewModel.ShowAllProcessesCommand.NotifyCanExecuteChanged();
+                                    solutionRunnerViewModel.MinimizeAllProcessesCommand.NotifyCanExecuteChanged();
                                     _ = UpdateStartupProjectsAsync();
                                 }
                             };
