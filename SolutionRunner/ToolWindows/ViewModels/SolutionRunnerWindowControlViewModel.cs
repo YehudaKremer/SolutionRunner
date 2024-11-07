@@ -106,11 +106,44 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
         private async Task StopAllProjectsAsync()
         {
-            foreach (var project in Projects.Where(i =>
-                i.ProjectItem.IsRunning && !i.ProjectItem.IsStartingOrStopping))
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
+
+            var projectsIds = new List<int>();
+            foreach (var projectName in Projects.Select(i => i.ProjectItem.SolutionProject.Name))
             {
-                await project.StopProjectAsync(true);
+                var projectProcess = System.Diagnostics.Process.GetProcessesByName(projectName).FirstOrDefault();
+                if (projectProcess != null)
+                {
+                    projectsIds.Add(projectProcess.Id);
+                }
             }
+
+
+
+            // Method 1: Using DTE.Debugger
+            EnvDTE.Processes processes = dte.Debugger.LocalProcesses;
+            foreach (EnvDTE.Process process in processes)
+            {
+                try
+                {
+                    if (projectsIds.Contains(process.ProcessID))
+                    {
+                        process.Attach();
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    // Handle exception
+                }
+            }
+
+            //foreach (var project in Projects.Where(i =>
+            //    i.ProjectItem.IsRunning && !i.ProjectItem.IsStartingOrStopping))
+            //{
+            //    await project.StopProjectAsync(true);
+            //}
         }
         public bool CanStopAllProjects => Projects
             .Any(p => p.ProjectItem.IsRunning && !p.ProjectItem.IsStartingOrStopping);
