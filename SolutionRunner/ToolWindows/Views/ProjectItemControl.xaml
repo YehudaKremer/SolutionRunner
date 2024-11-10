@@ -215,7 +215,39 @@
                 </Button.Style>
 
                 <imaging:CrispImage Width="14" Height="14" Moniker="{x:Static imagecatalog:KnownMonikers.Restart}"
-                                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=StartProjectButton, Converter={StaticResource BrushToColorConverter}}"/>
+                                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=RestartProjectButton, Converter={StaticResource BrushToColorConverter}}"/>
+            </Button>
+
+            <Button x:Name="AttachProjectButton" Command="{Binding AttachProjectCommand}" ToolTip="Attach Project">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ReusableButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ProjectItem.IsDebugging}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+
+                <imaging:CrispImage Width="14" Height="14" Moniker="{x:Static imagecatalog:KnownMonikers.Online}"
+                                   theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=AttachProjectButton, Converter={StaticResource BrushToColorConverter}}"/>
+            </Button>
+
+            <Button x:Name="DetachProjectButton" Command="{Binding DetachProjectCommand}" ToolTip="Detach Project">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ReusableButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ProjectItem.IsDebugging}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+
+                <imaging:CrispImage Width="14" Height="14" Moniker="{x:Static imagecatalog:KnownMonikers.Disconnect}"
+                                   theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, ElementName=DetachProjectButton, Converter={StaticResource BrushToColorConverter}}"/>
             </Button>
 
             <Button x:Name="StopProjectButton" Command="{Binding StopProjectCommand}" Style="{StaticResource ReusableButtonStyle}" ToolTip="Stop Project">

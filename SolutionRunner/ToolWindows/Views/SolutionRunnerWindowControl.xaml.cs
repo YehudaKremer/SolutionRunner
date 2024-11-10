@@ -125,7 +125,7 @@ namespace SolutionRunner.ToolWindows.Views
                             };
                             var newProjectItemControlViewModel = new ProjectItemControlViewModel { ProjectItem = projectItem };
 
-                            projectItem.PropertyChanged += (_, args) =>
+                            newProjectItemControlViewModel.ProjectItem.PropertyChanged += (_, args) =>
                             {
                                 if (args.PropertyName == nameof(projectItem.IsRunning) ||
                                     args.PropertyName == nameof(projectItem.IsStartingOrStopping) ||

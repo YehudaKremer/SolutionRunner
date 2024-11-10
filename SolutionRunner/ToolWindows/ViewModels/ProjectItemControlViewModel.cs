@@ -18,6 +18,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
     {
         public IAsyncRelayCommand StartProjectCommand { get; }
         public IAsyncRelayCommand RestartProjectCommand { get; }
+        public IAsyncRelayCommand AttachProjectCommand { get; }
+        public IAsyncRelayCommand DetachProjectCommand { get; }
         public IAsyncRelayCommand StopProjectCommand { get; }
         public IAsyncRelayCommand ShowProcessCommand { get; }
         private Task pollProcessesTask;
@@ -36,12 +38,16 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 projectItem = value;
                 pollProcessesTask = PollProcessesAsync(cancellationTokenSource.Token);
 
-                projectItem.PropertyChanged += (_, args) =>
+                ProjectItem.PropertyChanged += (_, args) =>
                 {
-                    if (args.PropertyName == nameof(projectItem.IsRunning) || args.PropertyName == nameof(projectItem.IsStartingOrStopping))
+                    if (args.PropertyName == nameof(projectItem.IsRunning) ||
+                        args.PropertyName == nameof(projectItem.IsDebugging) ||
+                        args.PropertyName == nameof(projectItem.IsStartingOrStopping))
                     {
                         StartProjectCommand.NotifyCanExecuteChanged();
                         RestartProjectCommand.NotifyCanExecuteChanged();
+                        AttachProjectCommand.NotifyCanExecuteChanged();
+                        DetachProjectCommand.NotifyCanExecuteChanged();
                         StopProjectCommand.NotifyCanExecuteChanged();
                         ShowProcessCommand.NotifyCanExecuteChanged();
                     }
@@ -53,6 +59,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
         {
             StartProjectCommand = new AsyncRelayCommand(StartProjectAsync, () => CanStartProject);
             RestartProjectCommand = new AsyncRelayCommand(RestartProjectAsync, () => CanRestartProject);
+            AttachProjectCommand = new AsyncRelayCommand(AttachProjectAsync, () => CanAttachProject);
+            DetachProjectCommand = new AsyncRelayCommand(DetachProjectAsync, () => CanDetachProject);
             StopProjectCommand = new AsyncRelayCommand(StopProjectAsync, () => CanStopProject);
             ShowProcessCommand = new AsyncRelayCommand(ShowProcessAsync, () => CanStopProject);
         }
@@ -89,6 +97,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 {
                     case RunType.Debug:
                         dte.Solution.SolutionBuild.Debug();
+                        ProjectItem.IsDebugging = true;
                         break;
                     default:
                         dte.Solution.SolutionBuild.Run();
@@ -111,6 +120,78 @@ namespace SolutionRunner.ToolWindows.ViewModels
         }
         public bool CanStartProject => ProjectItem != null &&
             !ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
+
+        public async Task AttachProjectAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem.IsStartingOrStopping = true;
+            await Task.Delay(100);
+
+            var projectProcess = Process.GetProcessesByName(ProjectItem.SolutionProject.Name).FirstOrDefault();
+            if (projectProcess != null)
+            {
+                var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
+                Processes processes = dte.Debugger.LocalProcesses;
+                foreach (EnvDTE.Process process in processes)
+                {
+                    try
+                    {
+                        if (projectProcess.Id == process.ProcessID)
+                        {
+                            process.Attach();
+                            ProjectItem.IsDebugging = true;
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+            }
+
+            ProjectItem.IsStartingOrStopping = false;
+        }
+        public bool CanAttachProject => ProjectItem != null && ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping && !ProjectItem.IsDebugging;
+
+        public async Task DetachProjectAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem.IsStartingOrStopping = true;
+            await Task.Delay(100);
+
+            var projectProcess2 = Process.GetProcessesByName(ProjectItem.SolutionProject.Name).ToList();
+            var projectProcess = Process.GetProcessesByName(ProjectItem.SolutionProject.Name).FirstOrDefault();
+            if (projectProcess != null)
+            {
+                var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
+                Processes processes = dte.Debugger.LocalProcesses;
+                foreach (EnvDTE.Process process in processes)
+                {
+                    try
+                    {
+                        if (projectProcess.Id == process.ProcessID)
+                        {
+                            _ = Task.Run(async () =>
+                            {
+                                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                                process.Detach();
+                            });
+                            ProjectItem.IsDebugging = false;
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+            }
+
+            ProjectItem.IsStartingOrStopping = false;
+        }
+
+        public bool CanDetachProject => ProjectItem != null && ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping &&
+            ProjectItem.IsDebugging;
 
         public Task StopProjectAsync() => StopProjectAsync(false);
         public async Task StopProjectAsync(bool closeAll)
@@ -158,20 +239,24 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     await TaskScheduler.Default;
-                    var runningProcesses = Process.GetProcessesByName(projectItem.ProjectName)
+                    var runningProcesses = Process.GetProcessesByName(ProjectItem.ProjectName)
                        .Where(p => !IsIISExpressProcess(p.Id))
                        .ToList();
 
                     var isRunning = runningProcesses.Any() ||
-                        IsIISExpressHostingProject(projectItem.ProjectName, out _);
-                    if (projectItem.IsRunning != isRunning)
+                        IsIISExpressHostingProject(ProjectItem.ProjectName, out _);
+                    if (ProjectItem.IsRunning != isRunning)
                     {
                         await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
                         ProjectItem.IsStartingOrStopping = false;
-                        projectItem.IsRunning = isRunning;
+                        ProjectItem.IsRunning = isRunning;
                         if (isRunning)
                         {
                             _ = TryConnectToLoggerNamedPipeAsync();
+                        }
+                        else
+                        {
+                            ProjectItem.IsDebugging = false;
                         }
                     }
 
@@ -215,36 +300,6 @@ namespace SolutionRunner.ToolWindows.ViewModels
             return false;
         }
 
-        public async ValueTask DisposeAsync()
-        {
-            await DisposeAsync(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual async Task DisposeAsync(bool disposing)
-        {
-            cancellationTokenSource.Cancel();
-
-            // Ensure the task has completed before attempting to dispose
-            if (pollProcessesTask != null && (pollProcessesTask.IsCompleted || pollProcessesTask.IsCanceled || pollProcessesTask.IsFaulted))
-            {
-                pollProcessesTask.Dispose();
-            }
-            cancellationTokenSource.Dispose();
-
-            if (pipeClient != null)
-            {
-                pipeClient.Dispose();
-                pipeClient = null;
-            }
-
-            if (output != null)
-            {
-                await output.HideAsync();
-                output = null;
-            }
-        }
-
         private async Task TryConnectToLoggerNamedPipeAsync()
         {
             if (pipeClient == null)
@@ -264,7 +319,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     {
                         var lineLower = line.ToLower();
                         var isNewOutput = output == null;
-                        output ??= await VS.Windows.CreateOutputWindowPaneAsync($"SolutionRunner - {projectItem.ProjectName}", true);
+                        output ??= await VS.Windows.CreateOutputWindowPaneAsync($"SolutionRunner - {ProjectItem.ProjectName}", true);
 
                         if (isNewOutput)
                         {
@@ -353,6 +408,36 @@ namespace SolutionRunner.ToolWindows.ViewModels
         {
             using var searcher = new ManagementObjectSearcher($"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {processId}");
             return searcher.Get().Cast<ManagementObject>().FirstOrDefault()?["CommandLine"]?.ToString() ?? string.Empty;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsync(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual async Task DisposeAsync(bool disposing)
+        {
+            cancellationTokenSource.Cancel();
+
+            // Ensure the task has completed before attempting to dispose
+            if (pollProcessesTask != null && (pollProcessesTask.IsCompleted || pollProcessesTask.IsCanceled || pollProcessesTask.IsFaulted))
+            {
+                pollProcessesTask.Dispose();
+            }
+            cancellationTokenSource.Dispose();
+
+            if (pipeClient != null)
+            {
+                pipeClient.Dispose();
+                pipeClient = null;
+            }
+
+            if (output != null)
+            {
+                await output.HideAsync();
+                output = null;
+            }
         }
     }
 }

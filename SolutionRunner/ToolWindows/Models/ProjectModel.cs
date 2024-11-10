@@ -34,6 +34,13 @@ namespace SolutionRunner.ToolWindows.Models
             set => SetProperty(ref isRunning, value);
         }
 
+        private bool isDebugging;
+        public bool IsDebugging
+        {
+            get => isDebugging;
+            set => SetProperty(ref isDebugging, value);
+        }
+
         private bool haveBuildError;
         public bool HaveBuildError
         {
