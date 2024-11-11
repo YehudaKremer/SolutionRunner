@@ -1,18 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-
 	<Extern href="stdidcmd.h"/>
 	<Extern href="vsshlids.h"/>
 	<Include href="KnownImageIds.vsct"/>
 	<Include href="VSGlobals.vsct"/>
 
 	<Commands package="SolutionRunner">
-		<!--This section defines the elements the user can interact with, like a menu command or a button or combo box in a toolbar. -->
+		<!-- Define custom images if you want to use your own icon -->
+		<Bitmaps>
+			<Bitmap guid="guidSmallIcon" href="Resources\SmallIcon.png" usedList="bmpSmallIcon"/>
+		</Bitmaps>
+
 		<Buttons>
 			<Button guid="SolutionRunner" id="ShowSolutionRunnerWindowCommand" priority="0x0100" type="Button">
 				<Parent guid="VSMainMenu" id="View.ExplorerWindowsGroup"/>
-				<Icon guid="ImageCatalogGuid" id="PYDebugInteractiveWindow" />
-				<CommandFlag>IconIsMoniker</CommandFlag>
+				<Icon guid="guidSmallIcon" id="bmpSmallIcon" />
 				<Strings>
 					<ButtonText>Solution Runner</ButtonText>
 					<LocCanonicalName>.View.SolutionRunnerWindow</LocCanonicalName>
@@ -22,8 +24,14 @@
 	</Commands>
 
 	<Symbols>
+		<!-- Command Set GUID for your extension -->
 		<GuidSymbol name="SolutionRunner" value="{f4ad53e6-1564-48ba-8edf-d0950c6a713a}">
 			<IDSymbol name="ShowSolutionRunnerWindowCommand" value="0x0100" />
+		</GuidSymbol>
+
+		<!-- GUID for custom images - Generate a new GUID if you use this -->
+		<GuidSymbol name="guidSmallIcon" value="{dcd53e47-0857-4d2b-9848-5c59cf091faa}">
+			<IDSymbol name="bmpSmallIcon" value="1" />
 		</GuidSymbol>
 	</Symbols>
 </CommandTable>

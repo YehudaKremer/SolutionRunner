@@ -14,6 +14,9 @@ namespace SolutionRunner
     {
         public const string SolutionRunnerString = "f4ad53e6-1564-48ba-8edf-d0950c6a713a";
         public static Guid SolutionRunner = new Guid(SolutionRunnerString);
+
+        public const string guidSmallIconString = "dcd53e47-0857-4d2b-9848-5c59cf091faa";
+        public static Guid guidSmallIcon = new Guid(guidSmallIconString);
     }
     /// <summary>
     /// Helper class that encapsulates all CommandIDs uses across VS Package.
@@ -21,5 +24,6 @@ namespace SolutionRunner
     internal sealed partial class PackageIds
     {
         public const int ShowSolutionRunnerWindowCommand = 0x0100;
+        public const int bmpSmallIcon = 0x0001;
     }
 }
