@@ -200,10 +200,10 @@ namespace SolutionRunner.ToolWindows.Views
                     await Output.WriteLineAsync("A new version of the extension is available. Please update to the latest version.");
 
                     var model = new InfoBarModel([
-                            new InfoBarTextSpan("New version of SolutionRunner extension is available. "),
+                            new InfoBarTextSpan("Please update Solution Runner extension. "),
                             new InfoBarButton("Update")], KnownMonikers.Extension, true);
 
-                    InfoBar infoBar = await VS.InfoBar.CreateAsync("f276e8de-411a-4043-a759-cb2b46c30645", model);
+                    InfoBar infoBar = await VS.InfoBar.CreateAsync("01c0a0fa-2ec0-4cb2-9b9c-8d8b9d0454f9", model);
                     infoBar.ActionItemClicked += (object sender, InfoBarActionItemEventArgs e) =>
                     {
                         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
