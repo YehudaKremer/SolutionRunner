@@ -7,11 +7,11 @@ namespace SolutionRunner
 {
     internal sealed partial class Vsix
     {
-        public const string Id = "SolutionRunner.6f32920d-36a2-4d5b-915d-49fe0afc52de";
-        public const string Name = "SolutionRunner";
+        public const string Id = "SolutionRunner.6f32920d-36a2-4d5b-915d-49fe0afc52da";
+        public const string Name = "Solution Runner";
         public const string Description = @"Easily Run Multi Project Solution.";
         public const string Language = "en-US";
-        public const string Version = "0.1.2";
+        public const string Version = "0.1.0";
         public const string Author = "YehudaK";
         public const string Tags = "solution, run, debug, micro service";
     }
