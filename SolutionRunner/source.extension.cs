@@ -11,7 +11,7 @@ namespace SolutionRunner
         public const string Name = "SolutionRunner";
         public const string Description = @"Easily Run Multi Project Solution.";
         public const string Language = "en-US";
-        public const string Version = "0.1.1";
+        public const string Version = "0.1.2";
         public const string Author = "YehudaK";
         public const string Tags = "solution, run, debug, micro service";
     }
