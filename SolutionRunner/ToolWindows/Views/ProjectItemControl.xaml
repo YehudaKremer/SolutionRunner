@@ -104,7 +104,7 @@
                     <Setter Property="Moniker" Value="{x:Static imagecatalog:KnownMonikers.RunOutlineNoColor}" />
                     <Setter Property="theming:ImageThemingUtilities.ImageBackgroundColor" Value="{Binding Background, ElementName=SolutionRunnerWindow, Converter={StaticResource BrushToColorConverter}}" />
                     <Setter Property="Visibility" Value="Visible" />
-                    <Setter Property="ToolTip" Value="" />
+                    <Setter Property="ToolTip" Value="{x:Null}" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="True">
                             <Setter Property="Moniker" Value="{x:Static imagecatalog:KnownMonikers.RunOutline}" />
