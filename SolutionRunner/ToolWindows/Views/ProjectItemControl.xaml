@@ -104,9 +104,19 @@
                     <Setter Property="Moniker" Value="{x:Static imagecatalog:KnownMonikers.RunOutlineNoColor}" />
                     <Setter Property="theming:ImageThemingUtilities.ImageBackgroundColor" Value="{Binding Background, ElementName=SolutionRunnerWindow, Converter={StaticResource BrushToColorConverter}}" />
                     <Setter Property="Visibility" Value="Visible" />
+                    <Setter Property="ToolTip" Value="" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="True">
+                            <Setter Property="Moniker" Value="{x:Static imagecatalog:KnownMonikers.RunOutline}" />
+                            <Setter Property="ToolTip" Value="Running" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ProjectItem.IsDebugging}" Value="True">
                             <Setter Property="Moniker" Value="{x:Static imagecatalog:KnownMonikers.Run}" />
+                            <Setter Property="ToolTip" Value="Debugging" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ProjectItem.HaveBuildError}" Value="True">
+                            <Setter Property="Moniker" Value="{x:Static imagecatalog:KnownMonikers.RunFailedTest}" />
+                            <Setter Property="ToolTip" Value="Build Faild" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding ProjectItem.IsStartingOrStopping}" Value="True">
                             <Setter Property="Visibility" Value="Collapsed" />
