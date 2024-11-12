@@ -17,7 +17,7 @@ namespace SolutionRunner
             return version;
         }
 
-        private const string MarketplaceUrl = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery?api-version=6.1-preview.1";
+        private const string MarketplaceUrl = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery?api-version=7.2-preview.1";
 
         public static async Task<string> GetLatestVersionAsync(string publisherName, string extensionName)
         {
@@ -60,15 +60,15 @@ namespace SolutionRunner
             }
         }
 
-        public static async Task<bool> CheckIfExtensionHaveNewVersionAsync()
+        public static async Task<(string currentVersion, string latestVersion)> GetCurrentAndLatestVersionAsync()
         {
             string currentVersion = GetInstalledVersion();
             string currentVersionShort = string.Join(".", currentVersion.Split('.').Take(3));
 
-            string latestVersion = await GetLatestVersionAsync("YehudaK", "SolutionRunner");
+            string latestVersion = await GetLatestVersionAsync("YehudaK", "Solution Runner");
             string latestVersionShort = string.Join(".", latestVersion.Split('.').Take(3));
 
-            return !currentVersionShort.Equals(latestVersionShort, StringComparison.OrdinalIgnoreCase);
+            return (currentVersionShort, latestVersionShort);
         }
     }
 }

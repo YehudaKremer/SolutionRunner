@@ -1,7 +1,9 @@
 ﻿using Microsoft.VisualStudio.Imaging;
+using Microsoft.VisualStudio.Threading;
 using SolutionRunner.ToolWindows.Models;
 using SolutionRunner.ToolWindows.ViewModels;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 
 namespace SolutionRunner.ToolWindows.Views
@@ -189,18 +191,20 @@ namespace SolutionRunner.ToolWindows.Views
 
         private async Task CheckForNewVersionAsync()
         {
+            await TaskScheduler.Default;
             extensionVesionChecked = true;
 
             try
             {
-                var haveNewVersion = await VersionChecker.CheckIfExtensionHaveNewVersionAsync();
+                var (currentVersion, latestVersion) = await VersionChecker.GetCurrentAndLatestVersionAsync();
+                var haveNewVersion = !currentVersion.Equals(latestVersion, StringComparison.OrdinalIgnoreCase);
                 if (haveNewVersion)
                 {
                     await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                    await Output.WriteLineAsync("A new version of the extension is available. Please update to the latest version.");
+                    await Output.WriteLineAsync($"A new version of the extension is available, current version: {currentVersion}, new version: {latestVersion}, Please update to the latest version.");
 
                     var model = new InfoBarModel([
-                            new InfoBarTextSpan("Please update Solution Runner extension. "),
+                            new InfoBarTextSpan($"New version ({latestVersion}) is available. "),
                             new InfoBarButton("Update")], KnownMonikers.Extension, true);
 
                     InfoBar infoBar = await VS.InfoBar.CreateAsync("01c0a0fa-2ec0-4cb2-9b9c-8d8b9d0454f9", model);
