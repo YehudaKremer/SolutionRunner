@@ -17,7 +17,11 @@ namespace SolutionRunner.ToolWindows.Models
         public RunType ProjectRunType
         {
             get => projectRunType;
-            set => SetProperty(ref projectRunType, value);
+            set
+            {
+                if (SetProperty(ref projectRunType, value))
+                    OnPropertyChanged(nameof(IsChecked));
+            }
         }
 
         private bool isStartingOrStopping;

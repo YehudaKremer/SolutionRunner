@@ -10,6 +10,7 @@
              xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"         
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              xmlns:platformUI="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:local="clr-namespace:SolutionRunner.ToolWindows"
              xmlns:ViewModels="clr-namespace:SolutionRunner.ToolWindows.ViewModels"
              xmlns:Views="clr-namespace:SolutionRunner.ToolWindows.Views"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
@@ -59,7 +60,7 @@
         <ViewModels:ProjectItemControlViewModel/>
     </d:UserControl.DataContext>
 
-    <Grid MinHeight="26">
+    <Grid MinHeight="26" local:MouseBehavior.Command="{Binding TryActivateProjectCommand}">
         <Grid.Style>
             <Style TargetType="Grid">
                 <Setter Property="Background" Value="{Binding Background, ElementName=ProjectItemControlDesign}" />
@@ -177,7 +178,8 @@
             <TextBlock Text="{Binding ProjectItem.NumberOfWarnings}" FontSize="11" Margin="3,0,0,0" />
         </StackPanel>
 
-        <CheckBox Grid.Column="4" Margin="5,0" Width="58" IsThreeState="True" IsChecked="{Binding ProjectItem.IsChecked}" VerticalContentAlignment="Center">
+        <CheckBox Grid.Column="4" Margin="5,0" Width="58" IsThreeState="True" VerticalContentAlignment="Center"
+                  IsChecked="{Binding ProjectItem.IsChecked}">
             <CheckBox.Content>
                 <TextBlock Text="{Binding ProjectItem.ProjectRunType}" />
             </CheckBox.Content>

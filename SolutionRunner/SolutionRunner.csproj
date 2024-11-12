@@ -55,6 +55,7 @@
     </Compile>
     <Compile Include="ToolWindows\Models\ProjectModel.cs" />
     <Compile Include="ToolWindows\Models\RunType.cs" />
+    <Compile Include="ToolWindows\MouseBehavior.cs" />
     <Compile Include="ToolWindows\ViewModels\ProjectItemControlViewModel.cs" />
     <Compile Include="ToolWindows\ViewModels\SolutionRunnerWindowControlViewModel.cs" />
     <Compile Include="ToolWindows\Views\DotCircleSpinnerControl.xaml.cs">

@@ -17,6 +17,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public IAsyncRelayCommand StopAllProjectsCommand { get; }
         public IRelayCommand ShowAllProcessesCommand { get; }
         public IRelayCommand MinimizeAllProcessesCommand { get; }
+        public IRelayCommand ToggleAllCheckBoxesCommand { get; }
         public ObservableCollection<ProjectItemControlViewModel> Projects { get; set; } = [];
         public SolutionRunnerWindowControl CurrentPage { get; set; }
 
@@ -26,6 +27,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             StopAllProjectsCommand = new AsyncRelayCommand(StopAllProjectsAsync, () => CanStopAllProjects);
             ShowAllProcessesCommand = new RelayCommand(ShowAllProcesses, () => CanStopAllProjects);
             MinimizeAllProcessesCommand = new RelayCommand(MinimizeAllProcesses, () => CanStopAllProjects);
+            ToggleAllCheckBoxesCommand = new RelayCommand(ToggleAllCheckBoxes, () => CanToggleAllCheckBoxes);
 
             Projects.CollectionChanged += (_, _) =>
             {
@@ -33,6 +35,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 StopAllProjectsCommand.NotifyCanExecuteChanged();
                 ShowAllProcessesCommand.NotifyCanExecuteChanged();
                 MinimizeAllProcessesCommand.NotifyCanExecuteChanged();
+                ToggleAllCheckBoxesCommand.NotifyCanExecuteChanged();
             };
         }
 
@@ -122,6 +125,23 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
         private static void ShowAllProcesses() => WindowHelper.BringAllProcessesToFrontAndArrangeSideBySide();
         private static void MinimizeAllProcesses() => WindowHelper.MinimizeAllProcessesWindows();
+
+        private void ToggleAllCheckBoxes()
+        {
+            var allUnmark = !Projects.Any(i => i.ProjectItem.ProjectRunType != RunType.None);
+            var haveDebug = Projects.Any(i => i.ProjectItem.ProjectRunType == RunType.Debug);
+
+            foreach (var project in Projects.Select(i => i.ProjectItem))
+            {
+                if (allUnmark)
+                    project.IsChecked = true;
+                else if (haveDebug)
+                    project.IsChecked = false;
+                else
+                    project.IsChecked = null;
+            }
+        }
+        public bool CanToggleAllCheckBoxes => Projects.Any();
 
         public static async Task<IEnumerable<Project>> LoadProjectsAsync()
         {

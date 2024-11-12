@@ -22,6 +22,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public IAsyncRelayCommand DetachProjectCommand { get; }
         public IAsyncRelayCommand StopProjectCommand { get; }
         public IAsyncRelayCommand ShowProcessCommand { get; }
+        public IAsyncRelayCommand TryActivateProjectCommand { get; }
         private Task pollProcessesTask;
         private readonly CancellationTokenSource cancellationTokenSource = new();
         private Community.VisualStudio.Toolkit.OutputWindowPane output = null;
@@ -63,6 +64,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             DetachProjectCommand = new AsyncRelayCommand(DetachProjectAsync, () => CanDetachProject);
             StopProjectCommand = new AsyncRelayCommand(StopProjectAsync, () => CanStopProject);
             ShowProcessCommand = new AsyncRelayCommand(ShowProcessAsync, () => CanStopProject);
+            TryActivateProjectCommand = new AsyncRelayCommand(TryActivateProjectAsync);
         }
 
         private async Task RestartProjectAsync()
@@ -228,6 +230,36 @@ namespace SolutionRunner.ToolWindows.ViewModels
             {
                 await SolutionRunnerWindowControl.Output.WriteLineAsync($"Error: {error.Message} | StackTrace: {error.StackTrace}");
             }
+        }
+
+        public async Task TryActivateProjectAsync()
+        {
+            try
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
+                var solutionExplorer = dte.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object as UIHierarchy;
+                var projectNode = await FindProjectNodeAsync(solutionExplorer.UIHierarchyItems, ProjectItem.SolutionProject.Name);
+                projectNode?.Select(vsUISelectionType.vsUISelectionTypeSelect);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private async Task<UIHierarchyItem> FindProjectNodeAsync(UIHierarchyItems items, string projectName)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            foreach (UIHierarchyItem item in items)
+            {
+                if (item.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase) && item.Object is EnvDTE.Project)
+                    return item;
+
+                var child = await FindProjectNodeAsync(item.UIHierarchyItems, projectName);
+                if (child != null)
+                    return child;
+            }
+            return null;
         }
 
         private async Task PollProcessesAsync(CancellationToken cancellationToken)
