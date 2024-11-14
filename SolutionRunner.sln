@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolutionRunnerLogging", "SolutionRunnerLogging\SolutionRunnerLogging.csproj", "{7C240D00-830E-4628-A688-94A20997411D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,18 @@ Global
 		{A89F9BEB-8570-462E-8C5F-CA57F33F8B27}.Release|arm64.Build.0 = Release|arm64
 		{A89F9BEB-8570-462E-8C5F-CA57F33F8B27}.Release|x86.ActiveCfg = Release|x86
 		{A89F9BEB-8570-462E-8C5F-CA57F33F8B27}.Release|x86.Build.0 = Release|x86
+		{7C240D00-830E-4628-A688-94A20997411D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Debug|arm64.Build.0 = Debug|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Debug|x86.Build.0 = Debug|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Release|arm64.ActiveCfg = Release|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Release|arm64.Build.0 = Release|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Release|x86.ActiveCfg = Release|Any CPU
+		{7C240D00-830E-4628-A688-94A20997411D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
