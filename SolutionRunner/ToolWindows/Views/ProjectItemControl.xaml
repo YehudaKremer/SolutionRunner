@@ -134,7 +134,11 @@
                    Margin="5,5,15,5" VerticalAlignment="Center" TextWrapping="Wrap">
             <TextBlock.Style>
                 <Style TargetType="TextBlock">
+                    <Setter Property="FontWeight" Value="SemiBold" />
                     <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProjectItem.IsChecked}" Value="False">
+                            <Setter Property="FontWeight" Value="Normal" />
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="True">
                             <Setter Property="Foreground" Value="Green" />
                         </DataTrigger>

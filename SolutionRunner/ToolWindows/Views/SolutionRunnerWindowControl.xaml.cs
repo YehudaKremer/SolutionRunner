@@ -112,7 +112,8 @@ namespace SolutionRunner.ToolWindows.Views
 
                         var existedProject = projects
                             .FirstOrDefault(i => i.ProjectItem.SolutionProject.FullPath == project.FullPath);
-                        var projectNameWithoutExtension = project.Name.Contains("\\") ? Path.GetFileNameWithoutExtension(project.FullPath) : project.Name;
+                        var projectNameWithoutExtension = project.Name.Contains(Path.DirectorySeparatorChar) ?
+                            Path.GetFileNameWithoutExtension(project.FullPath) : project.Name;
                         if (existedProject != null)
                         {
                             existedProject.ProjectItem.ProjectName = projectNameWithoutExtension;
