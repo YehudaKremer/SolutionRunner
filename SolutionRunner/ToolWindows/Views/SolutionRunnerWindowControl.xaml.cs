@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Threading;
 using SolutionRunner.ToolWindows.Models;
 using SolutionRunner.ToolWindows.ViewModels;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -111,9 +112,10 @@ namespace SolutionRunner.ToolWindows.Views
 
                         var existedProject = projects
                             .FirstOrDefault(i => i.ProjectItem.SolutionProject.FullPath == project.FullPath);
+                        var projectNameWithoutExtension = project.Name.Contains("\\") ? Path.GetFileNameWithoutExtension(project.FullPath) : project.Name;
                         if (existedProject != null)
                         {
-                            existedProject.ProjectItem.ProjectName = project.Name;
+                            existedProject.ProjectItem.ProjectName = projectNameWithoutExtension;
                             existedProject.ProjectItem.ProjectRunType = defaultRunType;
                             existedProject.ProjectItem.SolutionProject = project;
                         }
@@ -121,7 +123,7 @@ namespace SolutionRunner.ToolWindows.Views
                         {
                             var projectItem = new ProjectModel
                             {
-                                ProjectName = project.Name,
+                                ProjectName = projectNameWithoutExtension,
                                 SolutionProject = project,
                                 ProjectRunType = defaultRunType
                             };

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="SolutionRunner.6f32920d-36a2-4d5b-915d-49fe0afc52da" Version="0.1.2" Language="en-US" Publisher="YehudaK" />
+        <Identity Id="SolutionRunner.6f32920d-36a2-4d5b-915d-49fe0afc52da" Version="0.1.3" Language="en-US" Publisher="YehudaK" />
         <DisplayName>Solution Runner</DisplayName>
         <Description xml:space="preserve">Easily Run Multi Project Solution.</Description>
         <License>Resources\LICENSE.txt</License>

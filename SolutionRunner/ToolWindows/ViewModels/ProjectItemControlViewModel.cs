@@ -271,12 +271,12 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     await TaskScheduler.Default;
-                    var runningProcesses = Process.GetProcessesByName(ProjectItem.ProjectName)
+                    var runningProcesses = Process.GetProcessesByName(ProjectItem.SolutionProject.Name)
                        .Where(p => !IsIISExpressProcess(p.Id))
                        .ToList();
 
                     var isRunning = runningProcesses.Any() ||
-                        IsIISExpressHostingProject(ProjectItem.ProjectName, out _);
+                        IsIISExpressHostingProject(ProjectItem.SolutionProject.Name, out _);
                     if (ProjectItem.IsRunning != isRunning)
                     {
                         await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);

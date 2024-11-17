@@ -130,7 +130,8 @@
             </imaging:CrispImage.Style>
         </imaging:CrispImage>
 
-        <TextBlock Grid.Column="1" Text="{Binding ProjectItem.ProjectName}" Margin="5,5,15,5" VerticalAlignment="Center" TextWrapping="Wrap">
+        <TextBlock Grid.Column="1" Text="{Binding ProjectItem.ProjectName}" ToolTip="{Binding ProjectItem.SolutionProject.FullPath}"
+                   Margin="5,5,15,5" VerticalAlignment="Center" TextWrapping="Wrap">
             <TextBlock.Style>
                 <Style TargetType="TextBlock">
                     <Style.Triggers>
