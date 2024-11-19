@@ -6,6 +6,7 @@ using SolutionRunner.ToolWindows.Views;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Project = Community.VisualStudio.Toolkit.Project;
 
@@ -69,16 +70,23 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 foreach (var project in projectsToDebug)
                 {
                     await WaitForBuildStateAsync(dte);
-                    var buildSuccess = await project.SolutionProject.BuildAsync(BuildAction.Build);
+
+                    bool buildSuccess = false;
+
+                    try
+                    {
+                        buildSuccess = await project.SolutionProject.BuildAsync(BuildAction.Build);
+                    }
+                    catch (ExternalException error)
+                    {
+                        foreach (var projectBuild in projectsToDebug) projectBuild.IsStartingOrStopping = false;
+                        return;
+                    }
+
                     if (!buildSuccess)
                     {
                         project.HaveBuildError = true;
-
-                        foreach (var projectBuild in projectsToDebug)
-                        {
-                            projectBuild.IsStartingOrStopping = false;
-                        }
-
+                        foreach (var projectBuild in projectsToDebug) projectBuild.IsStartingOrStopping = false;
                         return;
                     }
                 }

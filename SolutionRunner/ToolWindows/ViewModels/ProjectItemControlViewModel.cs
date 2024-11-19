@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Management;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Process = System.Diagnostics.Process;
@@ -81,8 +82,6 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
         public async Task StartProjectAsync()
         {
-            ReStartCheckProcessStatus(fastCheckProcessStatusDelay);
-
             _ = TryConnectToLoggerNamedPipeAsync();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             //await output.WriteLineAsync($"starting project");
@@ -92,7 +91,20 @@ namespace SolutionRunner.ToolWindows.ViewModels
             var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
             await SolutionRunnerWindowControlViewModel.WaitForBuildStateAsync(dte);
 
-            var buildSuccess = await ProjectItem.SolutionProject.BuildAsync(BuildAction.Build);
+            bool buildSuccess;
+
+            try
+            {
+                buildSuccess = await ProjectItem.SolutionProject.BuildAsync(BuildAction.Build);
+            }
+            catch (ExternalException error)
+            {
+                ProjectItem.IsStartingOrStopping = false;
+                return;
+            }
+
+            ReStartCheckProcessStatus(fastCheckProcessStatusDelay);
+
             if (buildSuccess)
             {
                 //await output.WriteLineAsync("build success");
