@@ -59,10 +59,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 await project.StartProjectAsync();
             }
 
-            var projectsToDebug = projectsToStart
-                .Where(i => i.ProjectItem.ProjectRunType == RunType.Debug)
-                .Select(i => i.ProjectItem)
-                .ToList();
+            var projectsModelsToDebug = projectsToStart.Where(i => i.ProjectItem.ProjectRunType == RunType.Debug);
+            var projectsToDebug = projectsModelsToDebug.Select(i => i.ProjectItem).ToList();
 
             if (projectsToDebug.Count > 0)
             {
@@ -92,9 +90,10 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
                 dte.Solution.SolutionBuild.Debug();
 
-                foreach (var projectBuild in projectsToDebug)
+                foreach (var projectModel in projectsModelsToDebug)
                 {
-                    projectBuild.IsDebugging = true;
+                    projectModel.ProjectItem.IsDebugging = true;
+                    projectModel.ReStartCheckProcessStatus(ProjectItemControlViewModel.fastCheckProcessStatusDelay);
                 }
 
                 // TODO: can we check for idle console so we can do something else?

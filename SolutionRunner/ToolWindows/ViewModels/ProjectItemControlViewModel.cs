@@ -25,6 +25,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public IAsyncRelayCommand TryActivateProjectCommand { get; }
         private Task pollProcessesTask;
         private CancellationTokenSource processStatusCheckCancellationTokenSource;
+        public const int normalCheckProcessStatusDelay = 10000;
+        public const int fastCheckProcessStatusDelay = 250;
         private Community.VisualStudio.Toolkit.OutputWindowPane output = null;
         private NamedPipeClientStream pipeClient = null;
         private readonly string[] logWarnKeywords = ["|warn", "| warn", "|warning", "| warning"];
@@ -38,7 +40,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
             {
                 projectItem = value;
                 processStatusCheckCancellationTokenSource = new();
-                pollProcessesTask = StartCheckProcessStatusAsync(3000, processStatusCheckCancellationTokenSource.Token);
+                pollProcessesTask = StartCheckProcessStatusAsync(normalCheckProcessStatusDelay,
+                    processStatusCheckCancellationTokenSource.Token);
 
                 ProjectItem.PropertyChanged += (_, args) =>
                 {
@@ -78,7 +81,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
         public async Task StartProjectAsync()
         {
-            ReStartCheckProcessStatus(250);
+            ReStartCheckProcessStatus(fastCheckProcessStatusDelay);
 
             _ = TryConnectToLoggerNamedPipeAsync();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
@@ -123,7 +126,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 ProjectItem.IsStartingOrStopping = false;
             }
 
-            _ = Task.Delay(5000).ContinueWith(_ => ReStartCheckProcessStatus(3000), TaskScheduler.Default);
+            _ = Task.Delay(5000).ContinueWith(_ => ReStartCheckProcessStatus(normalCheckProcessStatusDelay), TaskScheduler.Default);
         }
         public bool CanStartProject => ProjectItem != null &&
             !ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
@@ -202,12 +205,12 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public Task StopProjectAsync() => StopProjectAsync(false);
         public async Task StopProjectAsync(bool closeAll)
         {
-            ReStartCheckProcessStatus(250);
+            ReStartCheckProcessStatus(fastCheckProcessStatusDelay);
 
             ProjectItem.IsStartingOrStopping = true;
             await StopProcessByProjectFullPathAsync(ProjectItem.SolutionProject.FullPath, closeAll);
 
-            _ = Task.Delay(5000).ContinueWith(_ => ReStartCheckProcessStatus(3000), TaskScheduler.Default);
+            _ = Task.Delay(5000).ContinueWith(_ => ReStartCheckProcessStatus(normalCheckProcessStatusDelay), TaskScheduler.Default);
         }
         public bool CanStopProject => ProjectItem != null &&
             ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
@@ -250,7 +253,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 var projectNode = await FindProjectNodeAsync(solutionExplorer.UIHierarchyItems, ProjectItem.SolutionProject.Name);
                 projectNode?.Select(vsUISelectionType.vsUISelectionTypeSelect);
             }
-            catch (Exception)
+            catch (Exception error)
             {
             }
         }
@@ -299,6 +302,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
                         {
                             ProjectItem.IsDebugging = false;
                         }
+
+                        checkEveryMillisecondsDelay = normalCheckProcessStatusDelay;
                     }
 
                     await Task.Delay(checkEveryMillisecondsDelay, cancellationToken);
@@ -505,7 +510,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             }
         }
 
-        private void ReStartCheckProcessStatus(int delayMS)
+        public void ReStartCheckProcessStatus(int delayMS)
         {
             TryDisposeProcessStatusCheckTaskAndCancellationToken();
             processStatusCheckCancellationTokenSource = new();
