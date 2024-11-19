@@ -4,7 +4,6 @@ using EnvDTE80;
 using Microsoft.VisualStudio.Threading;
 using SolutionRunner.ToolWindows.Models;
 using SolutionRunner.ToolWindows.Views;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -275,15 +274,12 @@ namespace SolutionRunner.ToolWindows.ViewModels
         {
             try
             {
-                // write to visual studio output window
-
-
                 //await output.WriteLineAsync("start monitoring project");
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     await TaskScheduler.Default;
-                    Debug.WriteLine($"StartCheckProcessStatusAsync: {projectItem.ProjectName}");
+
                     var runningProcesses = Process.GetProcessesByName(ProjectItem.SolutionProject.Name)
                        .Where(p => !IsIISExpressProcess(p.Id))
                        .ToList();
