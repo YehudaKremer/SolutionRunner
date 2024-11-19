@@ -4,6 +4,7 @@ using EnvDTE80;
 using Microsoft.VisualStudio.Threading;
 using SolutionRunner.ToolWindows.Models;
 using SolutionRunner.ToolWindows.Views;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public IAsyncRelayCommand ShowProcessCommand { get; }
         public IAsyncRelayCommand TryActivateProjectCommand { get; }
         private Task pollProcessesTask;
-        private readonly CancellationTokenSource cancellationTokenSource = new();
+        private CancellationTokenSource processStatusCheckCancellationTokenSource;
         private Community.VisualStudio.Toolkit.OutputWindowPane output = null;
         private NamedPipeClientStream pipeClient = null;
         private readonly string[] logWarnKeywords = ["|warn", "| warn", "|warning", "| warning"];
@@ -37,7 +38,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
             set
             {
                 projectItem = value;
-                pollProcessesTask = PollProcessesAsync(cancellationTokenSource.Token);
+                processStatusCheckCancellationTokenSource = new();
+                pollProcessesTask = StartCheckProcessStatusAsync(3000, processStatusCheckCancellationTokenSource.Token);
 
                 ProjectItem.PropertyChanged += (_, args) =>
                 {
@@ -77,6 +79,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
         public async Task StartProjectAsync()
         {
+            ReStartCheckProcessStatus(250);
+
             _ = TryConnectToLoggerNamedPipeAsync();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             //await output.WriteLineAsync($"starting project");
@@ -119,6 +123,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 ProjectItem.HaveBuildError = true;
                 ProjectItem.IsStartingOrStopping = false;
             }
+
+            _ = Task.Delay(5000).ContinueWith(_ => ReStartCheckProcessStatus(3000), TaskScheduler.Default);
         }
         public bool CanStartProject => ProjectItem != null &&
             !ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
@@ -162,7 +168,6 @@ namespace SolutionRunner.ToolWindows.ViewModels
             ProjectItem.IsStartingOrStopping = true;
             await Task.Delay(100);
 
-            var projectProcess2 = Process.GetProcessesByName(ProjectItem.SolutionProject.Name).ToList();
             var projectProcess = Process.GetProcessesByName(ProjectItem.SolutionProject.Name).FirstOrDefault();
             if (projectProcess != null)
             {
@@ -198,8 +203,12 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public Task StopProjectAsync() => StopProjectAsync(false);
         public async Task StopProjectAsync(bool closeAll)
         {
+            ReStartCheckProcessStatus(250);
+
             ProjectItem.IsStartingOrStopping = true;
             await StopProcessByProjectFullPathAsync(ProjectItem.SolutionProject.FullPath, closeAll);
+
+            _ = Task.Delay(5000).ContinueWith(_ => ReStartCheckProcessStatus(3000), TaskScheduler.Default);
         }
         public bool CanStopProject => ProjectItem != null &&
             ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
@@ -262,21 +271,25 @@ namespace SolutionRunner.ToolWindows.ViewModels
             return null;
         }
 
-        private async Task PollProcessesAsync(CancellationToken cancellationToken)
+        private async Task StartCheckProcessStatusAsync(int checkEveryMillisecondsDelay, CancellationToken cancellationToken)
         {
             try
             {
+                // write to visual studio output window
+
+
                 //await output.WriteLineAsync("start monitoring project");
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     await TaskScheduler.Default;
+                    Debug.WriteLine($"StartCheckProcessStatusAsync: {projectItem.ProjectName}");
                     var runningProcesses = Process.GetProcessesByName(ProjectItem.SolutionProject.Name)
                        .Where(p => !IsIISExpressProcess(p.Id))
                        .ToList();
-
                     var isRunning = runningProcesses.Any() ||
                         IsIISExpressHostingProject(ProjectItem.SolutionProject.Name, out _);
+
                     if (ProjectItem.IsRunning != isRunning)
                     {
                         await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
@@ -292,7 +305,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                         }
                     }
 
-                    await Task.Delay(3000, cancellationToken);
+                    await Task.Delay(checkEveryMillisecondsDelay, cancellationToken);
                 }
             }
             catch (ObjectDisposedException) { }
@@ -450,14 +463,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
         protected virtual async Task DisposeAsync(bool disposing)
         {
-            cancellationTokenSource.Cancel();
-
-            // Ensure the task has completed before attempting to dispose
-            if (pollProcessesTask != null && (pollProcessesTask.IsCompleted || pollProcessesTask.IsCanceled || pollProcessesTask.IsFaulted))
-            {
-                pollProcessesTask.Dispose();
-            }
-            cancellationTokenSource.Dispose();
+            TryDisposeProcessStatusCheckTaskAndCancellationToken();
 
             if (pipeClient != null)
             {
@@ -470,6 +476,44 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 await output.HideAsync();
                 output = null;
             }
+        }
+
+        private void TryDisposeProcessStatusCheckTaskAndCancellationToken()
+        {
+            try
+            {
+                if (processStatusCheckCancellationTokenSource != null &&
+                    !processStatusCheckCancellationTokenSource.IsCancellationRequested)
+                {
+                    processStatusCheckCancellationTokenSource.Cancel();
+                }
+
+                // Ensure the task has completed before attempting to dispose
+                if (pollProcessesTask != null && (pollProcessesTask.IsCompleted || pollProcessesTask.IsCanceled ||
+                    pollProcessesTask.IsFaulted))
+                {
+                    pollProcessesTask.Dispose();
+                }
+                pollProcessesTask = null;
+
+                if (processStatusCheckCancellationTokenSource != null)
+                {
+                    processStatusCheckCancellationTokenSource.Dispose();
+                    processStatusCheckCancellationTokenSource = null;
+                }
+            }
+            catch (Exception error)
+            {
+
+
+            }
+        }
+
+        private void ReStartCheckProcessStatus(int delayMS)
+        {
+            TryDisposeProcessStatusCheckTaskAndCancellationToken();
+            processStatusCheckCancellationTokenSource = new();
+            pollProcessesTask = StartCheckProcessStatusAsync(delayMS, processStatusCheckCancellationTokenSource.Token);
         }
     }
 }
