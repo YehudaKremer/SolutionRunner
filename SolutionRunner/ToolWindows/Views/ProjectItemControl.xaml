@@ -130,28 +130,32 @@
             </imaging:CrispImage.Style>
         </imaging:CrispImage>
 
-        <TextBlock Grid.Column="1" Text="{Binding ProjectItem.ProjectName}" ToolTip="{Binding ProjectItem.SolutionProject.FullPath}"
-                   Margin="5,5,15,5" VerticalAlignment="Center" TextWrapping="Wrap">
-            <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                    <Setter Property="FontWeight" Value="SemiBold" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding ProjectItem.IsChecked}" Value="False">
-                            <Setter Property="FontWeight" Value="Normal" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="True">
-                            <Setter Property="Foreground" Value="Green" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding ProjectItem.HaveBuildError}" Value="True">
-                            <Setter Property="Foreground" Value="Red" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding ProjectItem.IsStartingOrStopping}" Value="True">
-                            <Setter Property="Foreground" Value="Gray" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBlock.Style>
-        </TextBlock>
+        <StackPanel Grid.Column="1" HorizontalAlignment="Left" Margin="5,5,15,5">
+            <TextBlock Text="{Binding ProjectItem.ProjectName}" 
+               ToolTip="{Binding ProjectItem.SolutionProject.FullPath}"
+               VerticalAlignment="Center" 
+               TextTrimming="CharacterEllipsis">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ProjectItem.IsChecked}" Value="False">
+                                <Setter Property="FontWeight" Value="Normal" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ProjectItem.IsRunning}" Value="True">
+                                <Setter Property="Foreground" Value="Green" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ProjectItem.HaveBuildError}" Value="True">
+                                <Setter Property="Foreground" Value="Red" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ProjectItem.IsStartingOrStopping}" Value="True">
+                                <Setter Property="Foreground" Value="Gray" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="5,0" VerticalAlignment="Center">
             <StackPanel.Style>
