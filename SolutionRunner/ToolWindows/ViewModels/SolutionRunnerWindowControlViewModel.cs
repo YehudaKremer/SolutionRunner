@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using EnvDTE;
 using EnvDTE80;
 using SolutionRunner.ToolWindows.Models;
@@ -12,15 +13,22 @@ using Project = Community.VisualStudio.Toolkit.Project;
 
 namespace SolutionRunner.ToolWindows.ViewModels
 {
-    public class SolutionRunnerWindowControlViewModel
+    public class SolutionRunnerWindowControlViewModel : ObservableObject
     {
         public IAsyncRelayCommand StartAllSelectedProjectsCommand { get; }
         public IAsyncRelayCommand StopAllProjectsCommand { get; }
         public IRelayCommand ShowAllProcessesCommand { get; }
         public IRelayCommand MinimizeAllProcessesCommand { get; }
         public IRelayCommand ToggleAllCheckBoxesCommand { get; }
+        public IRelayCommand ClearSearchCommand { get; }
         public ObservableCollection<ProjectItemControlViewModel> Projects { get; set; } = [];
         public SolutionRunnerWindowControl CurrentPage { get; set; }
+        private string searchText;
+        public string SearchText
+        {
+            get => searchText;
+            set => SetProperty(ref searchText, value);
+        }
 
         public SolutionRunnerWindowControlViewModel()
         {
@@ -29,6 +37,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             ShowAllProcessesCommand = new RelayCommand(ShowAllProcesses, () => CanStopAllProjects);
             MinimizeAllProcessesCommand = new RelayCommand(MinimizeAllProcesses, () => CanStopAllProjects);
             ToggleAllCheckBoxesCommand = new RelayCommand(ToggleAllCheckBoxes, () => CanToggleAllCheckBoxes);
+            ClearSearchCommand = new RelayCommand(ClearSearch);
 
             Projects.CollectionChanged += (_, _) =>
             {
@@ -149,6 +158,11 @@ namespace SolutionRunner.ToolWindows.ViewModels
             }
         }
         public bool CanToggleAllCheckBoxes => Projects.Any();
+
+        private void ClearSearch()
+        {
+            SearchText = string.Empty;
+        }
 
         public static async Task<IEnumerable<Project>> LoadProjectsAsync()
         {
