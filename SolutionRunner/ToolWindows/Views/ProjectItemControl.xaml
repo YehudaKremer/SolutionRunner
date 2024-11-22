@@ -133,8 +133,7 @@
         <StackPanel Grid.Column="1" HorizontalAlignment="Left" Margin="5,5,15,5">
             <TextBlock Text="{Binding ProjectItem.ProjectName}" 
                ToolTip="{Binding ProjectItem.SolutionProject.FullPath}"
-               VerticalAlignment="Center" 
-               TextTrimming="CharacterEllipsis">
+               VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="FontWeight" Value="SemiBold" />

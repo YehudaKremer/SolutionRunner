@@ -6,9 +6,11 @@ using SolutionRunner.ToolWindows.Models;
 using SolutionRunner.ToolWindows.Views;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using Project = Community.VisualStudio.Toolkit.Project;
 
 namespace SolutionRunner.ToolWindows.ViewModels
@@ -22,16 +24,33 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public IRelayCommand ToggleAllCheckBoxesCommand { get; }
         public IRelayCommand ClearSearchCommand { get; }
         public ObservableCollection<ProjectItemControlViewModel> Projects { get; set; } = [];
+        public bool HasProjects => Projects != null && Projects.Any();
+        private readonly System.Timers.Timer debounceTimer = new(300) { AutoReset = false };
+        private readonly ICollectionView filteredProjectsView;
+        public ICollectionView FilteredProjects => filteredProjectsView;
         public SolutionRunnerWindowControl CurrentPage { get; set; }
-        private string searchText;
+        private string searchText = "";
         public string SearchText
         {
             get => searchText;
-            set => SetProperty(ref searchText, value);
+            set
+            {
+                if (SetProperty(ref searchText, value))
+                {
+                    debounceTimer.Stop();
+                    debounceTimer.Start();
+                }
+            }
         }
 
         public SolutionRunnerWindowControlViewModel()
         {
+            debounceTimer.Elapsed += (s, e) => _ = ApplyFilterAsync();
+            filteredProjectsView = CollectionViewSource.GetDefaultView(Projects);
+            filteredProjectsView.Filter = FilterProjects;
+
+            Projects.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasProjects));
+
             StartAllSelectedProjectsCommand = new AsyncRelayCommand(StartAllSelectedProjectsAsync, () => CanStartSelectedProjects);
             StopAllProjectsCommand = new AsyncRelayCommand(StopAllProjectsAsync, () => CanStopAllProjects);
             ShowAllProcessesCommand = new RelayCommand(ShowAllProcesses, () => CanStopAllProjects);
@@ -47,6 +66,23 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 MinimizeAllProcessesCommand.NotifyCanExecuteChanged();
                 ToggleAllCheckBoxesCommand.NotifyCanExecuteChanged();
             };
+        }
+
+        private async Task ApplyFilterAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            filteredProjectsView.Refresh();
+        }
+
+        private bool FilterProjects(object item)
+        {
+            if (item is ProjectItemControlViewModel project)
+            {
+                var search = SearchText.Trim().ToLower();
+                return string.IsNullOrEmpty(search) ||
+                       project.ProjectItem.SolutionProject.Name.ToLower().Contains(search);
+            }
+            return false;
         }
 
         private async Task StartAllSelectedProjectsAsync()
