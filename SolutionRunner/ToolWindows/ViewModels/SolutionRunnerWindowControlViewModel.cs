@@ -159,6 +159,12 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     }
                 }, TaskScheduler.Default);
             }
+
+            var generalOptions = await General.GetLiveInstanceAsync();
+            if (generalOptions.HideStartedProcesses && projectsToStart.Count >= generalOptions.HideWhenNumberOfProcessesStart)
+            {
+                WindowHelper.MinimizeAllProcessesWindows(projectsToStart.Select(i => i.ProjectItem.SolutionProject.Name));
+            }
         }
         public bool CanStartSelectedProjects => Projects
             .Any(p => p.ProjectItem.ProjectRunType != RunType.None &&
