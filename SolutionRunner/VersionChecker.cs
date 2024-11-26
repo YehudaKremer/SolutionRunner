@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SolutionRunner
@@ -19,7 +20,8 @@ namespace SolutionRunner
 
         private const string MarketplaceUrl = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery?api-version=7.2-preview.1";
 
-        public static async Task<string> GetLatestVersionAsync(string publisherName, string extensionName)
+        public static async Task<string> GetLatestVersionAsync(string publisherName, string extensionName,
+            CancellationToken cancellationToken)
         {
             using var httpClient = new HttpClient();
             var requestContent = new
@@ -43,7 +45,7 @@ namespace SolutionRunner
             HttpResponseMessage response;
             try
             {
-                response = await httpClient.PostAsync(MarketplaceUrl, content);
+                response = await httpClient.PostAsync(MarketplaceUrl, content, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -60,12 +62,12 @@ namespace SolutionRunner
             }
         }
 
-        public static async Task<(string currentVersion, string latestVersion)> GetCurrentAndLatestVersionAsync()
+        public static async Task<(string currentVersion, string latestVersion)> GetCurrentAndLatestVersionAsync(CancellationToken cancellationToken)
         {
             string currentVersion = GetInstalledVersion();
             string currentVersionShort = string.Join(".", currentVersion.Split('.').Take(3));
 
-            string latestVersion = await GetLatestVersionAsync("YehudaK", "Solution Runner");
+            string latestVersion = await GetLatestVersionAsync("YehudaK", "Solution Runner", cancellationToken);
             string latestVersionShort = string.Join(".", latestVersion.Split('.').Take(3));
 
             return (currentVersionShort, latestVersionShort);

@@ -15,7 +15,7 @@ namespace SolutionRunner
 
         public override Task<FrameworkElement> CreateAsync(int toolWindowId, CancellationToken cancellationToken)
         {
-            return Task.FromResult<FrameworkElement>(new SolutionRunnerWindowControl());
+            return Task.FromResult<FrameworkElement>(new SolutionRunnerWindowControl(Package, cancellationToken));
         }
 
         [Guid("01c0a0fa-2ec0-4cb2-9b9c-8d8b9d0454f9")]

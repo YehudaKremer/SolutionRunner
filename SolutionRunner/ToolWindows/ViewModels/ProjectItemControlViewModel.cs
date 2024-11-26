@@ -72,24 +72,24 @@ namespace SolutionRunner.ToolWindows.ViewModels
             TryActivateProjectCommand = new AsyncRelayCommand(TryActivateProjectAsync);
         }
 
-        private async Task RestartProjectAsync()
+        private async Task RestartProjectAsync(CancellationToken cancellationToke)
         {
-            await StopProjectAsync();
-            await StartProjectAsync();
+            await StopProjectAsync(cancellationToke);
+            await StartProjectAsync(cancellationToke);
         }
         public bool CanRestartProject => ProjectItem != null &&
             ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
 
-        public async Task StartProjectAsync()
+        public async Task StartProjectAsync(CancellationToken cancellationToken)
         {
-            _ = TryConnectToLoggerNamedPipeAsync();
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            _ = TryConnectToLoggerNamedPipeAsync(cancellationToken);
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             //await output.WriteLineAsync($"starting project");
             ProjectItem.IsStartingOrStopping = true;
             ProjectItem.NumberOfErrors = 0;
             ProjectItem.NumberOfWarnings = 0;
             var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
-            await SolutionRunnerWindowControlViewModel.WaitForBuildStateAsync(dte);
+            await SolutionRunnerWindowControlViewModel.WaitForBuildStateAsync(dte, cancellationToken);
 
             bool buildSuccess;
 
@@ -109,7 +109,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             {
                 //await output.WriteLineAsync("build success");
                 ProjectItem.HaveBuildError = false;
-                await SolutionRunnerWindowControlViewModel.WaitForBuildStateAsync(dte);
+                await SolutionRunnerWindowControlViewModel.WaitForBuildStateAsync(dte, cancellationToken);
                 dte.Solution.SolutionBuild.StartupProjects =
                     new string[] { ProjectItem.SolutionProject.FullPath };
 
@@ -125,9 +125,9 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 }
 
                 // TODO: can we check for idle console so we can do something else?
-                _ = Task.Delay(5000).ContinueWith(async _ =>
+                _ = Task.Delay(5000, cancellationToken).ContinueWith(async _ =>
                 {
-                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
                     ProjectItem.IsStartingOrStopping = false;
                 }, TaskScheduler.Default);
             }
@@ -138,16 +138,17 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 ProjectItem.IsStartingOrStopping = false;
             }
 
-            _ = Task.Delay(5000).ContinueWith(_ => ReStartCheckProcessStatus(normalCheckProcessStatusDelay), TaskScheduler.Default);
+            _ = Task.Delay(5000, cancellationToken)
+                .ContinueWith(_ => ReStartCheckProcessStatus(normalCheckProcessStatusDelay), TaskScheduler.Default);
         }
         public bool CanStartProject => ProjectItem != null &&
             !ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
 
-        public async Task AttachProjectAsync()
+        public async Task AttachProjectAsync(CancellationToken cancellationToken)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             ProjectItem.IsStartingOrStopping = true;
-            await Task.Delay(100);
+            await Task.Delay(100, cancellationToken);
 
             var projectProcess = Process.GetProcessesByName(ProjectItem.SolutionProject.Name).FirstOrDefault();
             if (projectProcess != null)
@@ -176,11 +177,11 @@ namespace SolutionRunner.ToolWindows.ViewModels
         }
         public bool CanAttachProject => ProjectItem != null && ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping && !ProjectItem.IsDebugging;
 
-        public async Task DetachProjectAsync()
+        public async Task DetachProjectAsync(CancellationToken cancellationToken)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             ProjectItem.IsStartingOrStopping = true;
-            await Task.Delay(100);
+            await Task.Delay(100, cancellationToken);
 
             var projectProcess = Process.GetProcessesByName(ProjectItem.SolutionProject.Name).FirstOrDefault();
             if (projectProcess != null)
@@ -195,9 +196,9 @@ namespace SolutionRunner.ToolWindows.ViewModels
                         {
                             _ = Task.Run(async () =>
                             {
-                                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
                                 process.Detach();
-                            });
+                            }, cancellationToken);
                             ProjectItem.IsDebugging = false;
                             break;
                         }
@@ -214,15 +215,16 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public bool CanDetachProject => ProjectItem != null && ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping &&
             ProjectItem.IsDebugging;
 
-        public Task StopProjectAsync() => StopProjectAsync(false);
-        public async Task StopProjectAsync(bool closeAll)
+        public Task StopProjectAsync(CancellationToken cancellationToken) => StopProjectAsync(false, cancellationToken);
+        public async Task StopProjectAsync(bool closeAll, CancellationToken cancellationToken)
         {
             ReStartCheckProcessStatus(fastCheckProcessStatusDelay);
 
             ProjectItem.IsStartingOrStopping = true;
             await StopProcessByProjectFullPathAsync(ProjectItem.SolutionProject.FullPath, closeAll);
 
-            _ = Task.Delay(5000).ContinueWith(_ => ReStartCheckProcessStatus(normalCheckProcessStatusDelay), TaskScheduler.Default);
+            _ = Task.Delay(5000, cancellationToken)
+                .ContinueWith(_ => ReStartCheckProcessStatus(normalCheckProcessStatusDelay), TaskScheduler.Default);
         }
         public bool CanStopProject => ProjectItem != null &&
             ProjectItem.IsRunning && !ProjectItem.IsStartingOrStopping;
@@ -255,14 +257,15 @@ namespace SolutionRunner.ToolWindows.ViewModels
             }
         }
 
-        public async Task TryActivateProjectAsync()
+        public async Task TryActivateProjectAsync(CancellationToken cancellationToken)
         {
             try
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
                 var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
                 var solutionExplorer = dte.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object as UIHierarchy;
-                var projectNode = await FindProjectNodeAsync(solutionExplorer.UIHierarchyItems, ProjectItem.SolutionProject.Name);
+                var projectNode = await FindProjectNodeAsync(solutionExplorer.UIHierarchyItems,
+                    ProjectItem.SolutionProject.Name, cancellationToken);
                 projectNode?.Select(vsUISelectionType.vsUISelectionTypeSelect);
             }
             catch (Exception error)
@@ -270,15 +273,16 @@ namespace SolutionRunner.ToolWindows.ViewModels
             }
         }
 
-        private async Task<UIHierarchyItem> FindProjectNodeAsync(UIHierarchyItems items, string projectName)
+        private async Task<UIHierarchyItem> FindProjectNodeAsync(UIHierarchyItems items, string projectName,
+            CancellationToken cancellationToken)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             foreach (UIHierarchyItem item in items)
             {
                 if (item.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase) && item.Object is EnvDTE.Project)
                     return item;
 
-                var child = await FindProjectNodeAsync(item.UIHierarchyItems, projectName);
+                var child = await FindProjectNodeAsync(item.UIHierarchyItems, projectName, cancellationToken);
                 if (child != null)
                     return child;
             }
@@ -308,7 +312,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                         ProjectItem.IsRunning = isRunning;
                         if (isRunning)
                         {
-                            _ = TryConnectToLoggerNamedPipeAsync();
+                            _ = TryConnectToLoggerNamedPipeAsync(cancellationToken);
                         }
                         else
                         {
@@ -358,7 +362,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             return false;
         }
 
-        private async Task TryConnectToLoggerNamedPipeAsync()
+        private async Task TryConnectToLoggerNamedPipeAsync(CancellationToken cancellationToken)
         {
             if (pipeClient == null)
             {
@@ -368,7 +372,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     await TaskScheduler.Default;
                     //await output.WriteLineAsync(
                     //    $"connecting to logger \"SolutionRunner-{ProjectItem.ProjectName}\"... (will close after 60s of initial inactivity)");
-                    await pipeClient.ConnectAsync(60000);
+                    await pipeClient.ConnectAsync(60000, cancellationToken);
                     //await output.WriteLineAsync($"logger \"SolutionRunner-{ProjectItem.ProjectName}\" connected.");
 
                     var reader = new StreamReader(pipeClient);

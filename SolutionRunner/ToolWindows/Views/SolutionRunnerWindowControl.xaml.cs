@@ -4,6 +4,7 @@ using SolutionRunner.ToolWindows.Models;
 using SolutionRunner.ToolWindows.ViewModels;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
@@ -13,14 +14,20 @@ namespace SolutionRunner.ToolWindows.Views
     {
         private bool isSolutionOpened;
         private bool extensionVesionChecked;
+        private readonly ToolkitPackage toolkitPackage;
+        public readonly CancellationToken cancellationToken;
+
         public static OutputWindowPane Output { get; private set; }
 
-        public SolutionRunnerWindowControl()
+
+        public SolutionRunnerWindowControl(ToolkitPackage toolkitPackage, CancellationToken cancellationToken)
         {
             InitializeComponent();
             ((SolutionRunnerWindowControlViewModel)DataContext).CurrentPage = this;
             _ = InitializeOutputWindowPaneAsync();
             _ = RegisterEventsWhenSolutionOpenAsync();
+            this.toolkitPackage = toolkitPackage;
+            this.cancellationToken = cancellationToken;
         }
 
         private static async Task InitializeOutputWindowPaneAsync()
@@ -61,10 +68,10 @@ namespace SolutionRunner.ToolWindows.Views
             {
                 if (isSolutionOpened)
                 {
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, cancellationToken);
                     InitializeAction(project);
                 }
-            });
+            }, cancellationToken);
             solutionEvents.OnAfterRenameProject += InitializeAction;
         }
 
@@ -85,7 +92,7 @@ namespace SolutionRunner.ToolWindows.Views
                 //}
                 //ProjectsManagerInstance.ProjectsRunDetails.Clear();
 
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
                 var solutionProjects = await SolutionRunnerWindowControlViewModel.LoadProjectsAsync();
                 var solutionRunnerViewModel = (SolutionRunnerWindowControlViewModel)DataContext;
                 var projects = solutionRunnerViewModel.Projects;
@@ -103,7 +110,8 @@ namespace SolutionRunner.ToolWindows.Views
 
                 if (solutionProjects.Any())
                 {
-                    var solutionStartupProjects = await SolutionRunnerWindowControlViewModel.GetSolutionStartupProjectsAsync();
+                    var solutionStartupProjects = await SolutionRunnerWindowControlViewModel
+                        .GetSolutionStartupProjectsAsync(cancellationToken);
                     foreach (var project in solutionProjects.OrderBy(i => i.Name))
                     {
                         var isSelectedByDefault = solutionProjects.Count() == 1 ||
@@ -185,7 +193,8 @@ namespace SolutionRunner.ToolWindows.Views
 
         private async Task UpdateStartupProjectsAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
             var dte = await VS.GetRequiredServiceAsync<EnvDTE.DTE, EnvDTE80.DTE2>();
             dte.Solution.SolutionBuild.StartupProjects = ((SolutionRunnerWindowControlViewModel)DataContext).Projects
                 .Where(i => i.ProjectItem.ProjectRunType != RunType.None)
@@ -199,11 +208,11 @@ namespace SolutionRunner.ToolWindows.Views
 
             try
             {
-                var (currentVersion, latestVersion) = await VersionChecker.GetCurrentAndLatestVersionAsync();
+                var (currentVersion, latestVersion) = await VersionChecker.GetCurrentAndLatestVersionAsync(cancellationToken);
                 var haveNewVersion = !currentVersion.Equals(latestVersion, StringComparison.OrdinalIgnoreCase);
                 if (haveNewVersion)
                 {
-                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
                     await Output.WriteLineAsync($"A new version of the extension is available, current version: {currentVersion}, new version: {latestVersion}, Please update to the latest version.");
 
                     var model = new InfoBarModel([

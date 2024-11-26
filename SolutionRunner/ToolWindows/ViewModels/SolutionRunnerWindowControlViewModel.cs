@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using Project = Community.VisualStudio.Toolkit.Project;
@@ -29,6 +30,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
         private readonly ICollectionView filteredProjectsView;
         public ICollectionView FilteredProjects => filteredProjectsView;
         public SolutionRunnerWindowControl CurrentPage { get; set; }
+        private CancellationToken cancellationToken => CurrentPage.cancellationToken;
         private string searchText = "";
         public string SearchText
         {
@@ -70,7 +72,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
         private async Task ApplyFilterAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             filteredProjectsView.Refresh();
         }
 
@@ -87,7 +89,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
         private async Task StartAllSelectedProjectsAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             var projectsToStart = Projects
                 .Where(p => p.ProjectItem.ProjectRunType != RunType.None &&
@@ -102,7 +104,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
             foreach (var project in projectsToStart.Where(i => i.ProjectItem.ProjectRunType == RunType.Run))
             {
-                await project.StartProjectAsync();
+                await project.StartProjectAsync(cancellationToken);
             }
 
             var projectsModelsToDebug = projectsToStart.Where(i => i.ProjectItem.ProjectRunType == RunType.Debug);
@@ -114,7 +116,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
                 foreach (var project in projectsToDebug)
                 {
-                    await WaitForBuildStateAsync(dte);
+                    await WaitForBuildStateAsync(dte, cancellationToken);
 
                     bool buildSuccess = false;
 
@@ -136,7 +138,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     }
                 }
 
-                await WaitForBuildStateAsync(dte);
+                await WaitForBuildStateAsync(dte, cancellationToken);
 
                 dte.Solution.SolutionBuild.StartupProjects = projectsToDebug
                     .Select(i => i.SolutionProject.FullPath).ToArray();
@@ -150,9 +152,9 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 }
 
                 // TODO: can we check for idle console so we can do something else?
-                _ = Task.Delay(5000).ContinueWith(async _ =>
+                _ = Task.Delay(5000, cancellationToken).ContinueWith(async _ =>
                 {
-                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
                     foreach (var project in projectsToDebug)
                     {
                         project.IsStartingOrStopping = false;
@@ -175,7 +177,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             foreach (var project in Projects.Where(i =>
                 i.ProjectItem.IsRunning && !i.ProjectItem.IsStartingOrStopping))
             {
-                await project.StopProjectAsync(true);
+                await project.StopProjectAsync(true, cancellationToken);
             }
         }
         public bool CanStopAllProjects => Projects
@@ -248,10 +250,10 @@ namespace SolutionRunner.ToolWindows.ViewModels
             return programProjects;
         }
 
-        public static async Task<IEnumerable<string>> GetSolutionStartupProjectsAsync()
+        public static async Task<IEnumerable<string>> GetSolutionStartupProjectsAsync(CancellationToken cancellationToken)
         {
             var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             try
             {
                 var solutionStartupProjects = (object[])dte.Solution.SolutionBuild.StartupProjects;
@@ -264,9 +266,9 @@ namespace SolutionRunner.ToolWindows.ViewModels
             }
         }
 
-        public static async Task WaitForBuildStateAsync(DTE2 dte)
+        public static async Task WaitForBuildStateAsync(DTE2 dte, CancellationToken cancellationToken)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             while (dte.Solution.SolutionBuild.BuildState == vsBuildState.vsBuildStateInProgress)
             {
                 await Task.Delay(100);
