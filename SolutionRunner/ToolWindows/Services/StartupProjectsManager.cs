@@ -1,11 +1,12 @@
 ﻿using Microsoft.VisualStudio.Settings;
 using Microsoft.VisualStudio.Shell.Settings;
 using Newtonsoft.Json;
+using SolutionRunner.ToolWindows.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SolutionRunner.Services
+namespace SolutionRunner.ToolWindows.Services
 {
     public class StartupProjectsManager
     {
@@ -24,24 +25,24 @@ namespace SolutionRunner.Services
             }
         }
 
-        public async Task SaveStringListAsync(IEnumerable<string> list)
+        public async Task SaveStringListAsync(IEnumerable<StartupProject> list)
         {
             string json = JsonConvert.SerializeObject(list.OrderBy(s => s));
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             settingsStore.SetString(CollectionPath, ListPropertyName, json);
         }
 
-        public async Task<List<string>> LoadStringListAsync()
+        public async Task<List<StartupProject>> LoadStringListAsync()
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             if (settingsStore.PropertyExists(CollectionPath, ListPropertyName))
             {
                 string json = settingsStore.GetString(CollectionPath, ListPropertyName);
-                return JsonConvert.DeserializeObject<List<string>>(json) ?? new List<string>();
+                return JsonConvert.DeserializeObject<List<StartupProject>>(json) ?? [];
             }
 
-            return new List<string>();
+            return [];
         }
     }
 }
