@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Imaging;
 using Microsoft.VisualStudio.Threading;
 using SolutionRunner.ToolWindows.Models;
+using SolutionRunner.ToolWindows.Services;
 using SolutionRunner.ToolWindows.ViewModels;
 using System.IO;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace SolutionRunner.ToolWindows.Views
     {
         private bool isSolutionOpened;
         private bool extensionVesionChecked;
-        private readonly ToolkitPackage toolkitPackage;
+        public static StartupProjectsManager StartupProjects { get; private set; }
         public readonly CancellationToken cancellationToken;
 
         public static OutputWindowPane Output { get; private set; }
@@ -22,11 +23,12 @@ namespace SolutionRunner.ToolWindows.Views
 
         public SolutionRunnerWindowControl(ToolkitPackage toolkitPackage, CancellationToken cancellationToken)
         {
+            StartupProjects = new StartupProjectsManager(toolkitPackage);
+
             InitializeComponent();
             ((SolutionRunnerWindowControlViewModel)DataContext).CurrentPage = this;
             _ = InitializeOutputWindowPaneAsync();
             _ = RegisterEventsWhenSolutionOpenAsync();
-            this.toolkitPackage = toolkitPackage;
             this.cancellationToken = cancellationToken;
         }
 
@@ -96,7 +98,7 @@ namespace SolutionRunner.ToolWindows.Views
                 var solutionProjects = await SolutionRunnerWindowControlViewModel.LoadProjectsAsync();
                 var solutionRunnerViewModel = (SolutionRunnerWindowControlViewModel)DataContext;
                 var projects = solutionRunnerViewModel.Projects;
-
+                var startupProjects = await StartupProjects.LoadStartupProjectsAsync(cancellationToken);
                 var projectsToRemove = projects
                     .Where(project => solutionProjects
                     .FirstOrDefault(i => i.FullPath == project.ProjectItem.SolutionProject.FullPath) == null)
@@ -110,22 +112,19 @@ namespace SolutionRunner.ToolWindows.Views
 
                 if (solutionProjects.Any())
                 {
-                    var solutionStartupProjects = await SolutionRunnerWindowControlViewModel
-                        .GetSolutionStartupProjectsAsync(cancellationToken);
                     foreach (var project in solutionProjects.OrderBy(i => i.Name))
                     {
-                        var isSelectedByDefault = solutionProjects.Count() == 1 ||
-                            (solutionStartupProjects != null && solutionStartupProjects.Any(project.FullPath.EndsWith));
-                        var defaultRunType = isSelectedByDefault ? RunType.Run : RunType.None;
-
                         var existedProject = projects
                             .FirstOrDefault(i => i.ProjectItem.SolutionProject.FullPath == project.FullPath);
                         var projectNameWithoutExtension = project.Name.Contains(Path.DirectorySeparatorChar) ?
                             Path.GetFileNameWithoutExtension(project.FullPath) : project.Name;
+                        var projectDefaultRunType = startupProjects
+                            .Find(i => i.ProjectFullPath == project.FullPath)?.RunType ?? RunType.None;
+
                         if (existedProject != null)
                         {
                             existedProject.ProjectItem.ProjectName = projectNameWithoutExtension;
-                            existedProject.ProjectItem.ProjectRunType = defaultRunType;
+                            existedProject.ProjectItem.ProjectRunType = projectDefaultRunType;
                             existedProject.ProjectItem.SolutionProject = project;
                         }
                         else
@@ -134,11 +133,11 @@ namespace SolutionRunner.ToolWindows.Views
                             {
                                 ProjectName = projectNameWithoutExtension,
                                 SolutionProject = project,
-                                ProjectRunType = defaultRunType
+                                ProjectRunType = projectDefaultRunType
                             };
                             var newProjectItemControlViewModel = new ProjectItemControlViewModel { ProjectItem = projectItem };
 
-                            newProjectItemControlViewModel.ProjectItem.PropertyChanged += (_, args) =>
+                            newProjectItemControlViewModel.ProjectItem.PropertyChanged += (projectModel, args) =>
                             {
                                 if (args.PropertyName == nameof(projectItem.IsRunning) ||
                                     args.PropertyName == nameof(projectItem.IsStartingOrStopping) ||
@@ -149,7 +148,12 @@ namespace SolutionRunner.ToolWindows.Views
                                     solutionRunnerViewModel.StopAllProjectsCommand.NotifyCanExecuteChanged();
                                     solutionRunnerViewModel.ShowAllProcessesCommand.NotifyCanExecuteChanged();
                                     solutionRunnerViewModel.MinimizeAllProcessesCommand.NotifyCanExecuteChanged();
-                                    _ = UpdateStartupProjectsAsync();
+                                }
+
+                                if (args.PropertyName == nameof(projectItem.ProjectRunType))
+                                {
+                                    _ = StartupProjects.UpdateStartupProjectAsync((projectModel as ProjectModel).ToStartupProject(),
+                                        cancellationToken);
                                 }
                             };
 
@@ -189,16 +193,6 @@ namespace SolutionRunner.ToolWindows.Views
                 await Output.WriteLineAsync($"Error: {error.Message} | StackTrace: {error.StackTrace}");
                 throw;
             }
-        }
-
-        private async Task UpdateStartupProjectsAsync()
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-
-            var dte = await VS.GetRequiredServiceAsync<EnvDTE.DTE, EnvDTE80.DTE2>();
-            dte.Solution.SolutionBuild.StartupProjects = ((SolutionRunnerWindowControlViewModel)DataContext).Projects
-                .Where(i => i.ProjectItem.ProjectRunType != RunType.None)
-                .Select(i => i.ProjectItem.SolutionProject.FullPath).ToArray<object>();
         }
 
         private async Task CheckForNewVersionAsync()

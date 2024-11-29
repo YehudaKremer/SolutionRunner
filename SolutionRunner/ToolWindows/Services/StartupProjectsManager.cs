@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Shell.Settings;
 using Newtonsoft.Json;
 using SolutionRunner.ToolWindows.Models;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SolutionRunner.ToolWindows.Services
@@ -25,16 +25,27 @@ namespace SolutionRunner.ToolWindows.Services
             }
         }
 
-        public async Task SaveStringListAsync(IEnumerable<StartupProject> list)
+        public async Task SaveStartupProjectsAsync(IEnumerable<StartupProject> list, CancellationToken cancellationToken)
         {
-            string json = JsonConvert.SerializeObject(list.OrderBy(s => s));
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            string json = JsonConvert.SerializeObject(list);
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             settingsStore.SetString(CollectionPath, ListPropertyName, json);
         }
 
-        public async Task<List<StartupProject>> LoadStringListAsync()
+        public async Task UpdateStartupProjectAsync(StartupProject startupProject, CancellationToken cancellationToken)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            List<StartupProject> list = await LoadStartupProjectsAsync(cancellationToken);
+            list.RemoveAll(s => s.ProjectFullPath == startupProject.ProjectFullPath);
+            if (startupProject.RunType != RunType.None)
+            {
+                list.Add(startupProject);
+            }
+            await SaveStartupProjectsAsync(list, cancellationToken);
+        }
+
+        public async Task<List<StartupProject>> LoadStartupProjectsAsync(CancellationToken cancellationToken)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             if (settingsStore.PropertyExists(CollectionPath, ListPropertyName))
             {

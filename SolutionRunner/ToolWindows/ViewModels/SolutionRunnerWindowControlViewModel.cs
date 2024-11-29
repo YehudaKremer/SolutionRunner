@@ -90,6 +90,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
         private async Task StartAllSelectedProjectsAsync()
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
+            var solutionSartupProjects = dte.Solution.SolutionBuild.StartupProjects;
 
             var projectsToStart = Projects
                 .Where(p => p.ProjectItem.ProjectRunType != RunType.None &&
@@ -112,8 +114,6 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
             if (projectsToDebug.Count > 0)
             {
-                var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
-
                 foreach (var project in projectsToDebug)
                 {
                     await WaitForBuildStateAsync(dte, cancellationToken);
@@ -161,6 +161,13 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     }
                 }, TaskScheduler.Default);
             }
+
+
+            _ = Task.Delay(2500, cancellationToken).ContinueWith(async _ =>
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+                dte.Solution.SolutionBuild.StartupProjects = solutionSartupProjects;
+            }, TaskScheduler.Default);
 
             var generalOptions = await General.GetLiveInstanceAsync();
             if (generalOptions.HideStartedProcesses && projectsToStart.Count >= generalOptions.HideWhenNumberOfProcessesStart)
@@ -248,22 +255,6 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
             //    userControl.ProjectsHeadline.Content = $"Project ({programProjects.Count})";
             return programProjects;
-        }
-
-        public static async Task<IEnumerable<string>> GetSolutionStartupProjectsAsync(CancellationToken cancellationToken)
-        {
-            var dte = await VS.GetRequiredServiceAsync<DTE, DTE2>();
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-            try
-            {
-                var solutionStartupProjects = (object[])dte.Solution.SolutionBuild.StartupProjects;
-                return solutionStartupProjects != null ? solutionStartupProjects.Select(i => i.ToString()) : [];
-            }
-            catch (Exception error)
-            {
-                await SolutionRunnerWindowControl.Output.WriteLineAsync($"Error: {error.Message} | StackTrace: {error.StackTrace}");
-                return [];
-            }
         }
 
         public static async Task WaitForBuildStateAsync(DTE2 dte, CancellationToken cancellationToken)

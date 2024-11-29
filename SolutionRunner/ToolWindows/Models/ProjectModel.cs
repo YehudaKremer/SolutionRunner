@@ -86,5 +86,11 @@ namespace SolutionRunner.ToolWindows.Models
                 };
             }
         }
+
+        public StartupProject ToStartupProject() => new()
+        {
+            ProjectFullPath = SolutionProject.FullPath,
+            RunType = ProjectRunType
+        };
     }
 }

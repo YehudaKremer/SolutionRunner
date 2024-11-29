@@ -110,8 +110,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
                 //await output.WriteLineAsync("build success");
                 ProjectItem.HaveBuildError = false;
                 await SolutionRunnerWindowControlViewModel.WaitForBuildStateAsync(dte, cancellationToken);
-                dte.Solution.SolutionBuild.StartupProjects =
-                    new string[] { ProjectItem.SolutionProject.FullPath };
+                var solutionSartupProjects = dte.Solution.SolutionBuild.StartupProjects;
+                dte.Solution.SolutionBuild.StartupProjects = new string[] { ProjectItem.SolutionProject.FullPath };
 
                 switch (ProjectItem.ProjectRunType)
                 {
@@ -123,6 +123,19 @@ namespace SolutionRunner.ToolWindows.ViewModels
                         dte.Solution.SolutionBuild.Run();
                         break;
                 }
+
+                _ = Task.Delay(1000, cancellationToken).ContinueWith(async _ =>
+                {
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
+                    //object singleStartupProject = null;
+                    //if (solutionSartupProjects is object[] startupProjects)
+                    //{
+                    //    singleStartupProject = startupProjects[0];
+                    //}
+
+                    dte.Solution.SolutionBuild.StartupProjects = solutionSartupProjects;
+                }, TaskScheduler.Default);
 
                 // TODO: can we check for idle console so we can do something else?
                 _ = Task.Delay(5000, cancellationToken).ContinueWith(async _ =>
