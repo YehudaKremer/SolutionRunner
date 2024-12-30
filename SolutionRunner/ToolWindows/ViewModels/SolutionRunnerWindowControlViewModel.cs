@@ -246,7 +246,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
 
                 var outputType = await project.GetAttributeAsync("OutputType");
 
-                if (outputType.ToLower() == "exe" || project.Children.ToList().Exists(file =>
+                if (outputType?.ToLower() == "exe" || project.Children.ToList().Exists(file =>
                     executableProjectFiles.ToList().Exists(exeFileName => file.Text.ToLower().EndsWith(exeFileName))))
                 {
                     programProjects.Add(project);
