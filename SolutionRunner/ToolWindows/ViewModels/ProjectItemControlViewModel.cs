@@ -252,7 +252,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             {
                 foreach (var process in Process.GetProcessesByName("VsDebugConsole"))
                 {
-                    var title = process.MainWindowTitle.Split(new[] { "bin" }, StringSplitOptions.None)[0];
+                    var title = process.MainWindowTitle.Split(["bin"], StringSplitOptions.None)[0];
                     if (projectFullPath.StartsWith(title))
                     {
                         WindowHelper.BringProcessToFront(process);

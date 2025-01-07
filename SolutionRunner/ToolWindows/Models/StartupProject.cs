@@ -2,6 +2,7 @@
 {
     public class StartupProject
     {
+        public string SolutionName { get; set; }
         public string ProjectFullPath { get; set; }
         public RunType RunType { get; set; }
     }
