@@ -97,7 +97,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             {
                 buildSuccess = await ProjectItem.SolutionProject.BuildAsync(BuildAction.Build);
             }
-            catch (ExternalException error)
+            catch (ExternalException)
             {
                 ProjectItem.IsStartingOrStopping = false;
                 return;
@@ -179,7 +179,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                             break;
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
 
                     }
@@ -216,7 +216,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                             break;
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                     }
                 }
@@ -281,7 +281,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     ProjectItem.SolutionProject.Name, cancellationToken);
                 projectNode?.Select(vsUISelectionType.vsUISelectionTypeSelect);
             }
-            catch (Exception error)
+            catch (Exception)
             {
             }
         }
@@ -341,7 +341,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
             catch (ObjectDisposedException) { }
             catch (TaskCanceledException) { }
             catch (OperationCanceledException) { }
-            catch (Exception error)
+            catch (Exception)
             {
                 //await output.WriteLineAsync($"error: {error.Message}, stack trace: {error.StackTrace}");
             }
@@ -532,7 +532,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     processStatusCheckCancellationTokenSource = null;
                 }
             }
-            catch (Exception error)
+            catch (Exception)
             {
 
 

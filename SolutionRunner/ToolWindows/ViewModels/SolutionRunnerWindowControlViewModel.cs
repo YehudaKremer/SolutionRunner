@@ -1,4 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿// Ignore Spelling: dte
+
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EnvDTE;
 using EnvDTE80;
@@ -124,7 +126,7 @@ namespace SolutionRunner.ToolWindows.ViewModels
                     {
                         buildSuccess = await project.SolutionProject.BuildAsync(BuildAction.Build);
                     }
-                    catch (ExternalException error)
+                    catch (ExternalException)
                     {
                         foreach (var projectBuild in projectsToDebug) projectBuild.IsStartingOrStopping = false;
                         return;
