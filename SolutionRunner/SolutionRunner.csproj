@@ -84,6 +84,8 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\SmallIcon.png" />
+    <Resource Include="ToolWindows\Resources\Images\masswagger-logo.png" />
+    <Resource Include="ToolWindows\Resources\Images\swagger-logo.png" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
@@ -104,6 +106,10 @@
   <ItemGroup>
     <Compile Include="ToolWindows\SolutionRunnerWindow.cs" />
     <Resource Include="ToolWindows\Styles\SharedResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Resource>
+    <Resource Include="ToolWindows\Resources\ContextMenuResource.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Resource>

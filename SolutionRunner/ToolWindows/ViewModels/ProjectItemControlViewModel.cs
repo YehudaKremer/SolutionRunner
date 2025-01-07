@@ -2,6 +2,7 @@
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Threading;
+using Newtonsoft.Json.Linq;
 using SolutionRunner.ToolWindows.Models;
 using SolutionRunner.ToolWindows.Views;
 using System.IO;
@@ -24,6 +25,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
         public IAsyncRelayCommand StopProjectCommand { get; }
         public IAsyncRelayCommand ShowProcessCommand { get; }
         public IAsyncRelayCommand TryActivateProjectCommand { get; }
+        public IRelayCommand OpenSwaggerCommand { get; }
+        public IRelayCommand OpenMasswaggerCommand { get; }
         private Task pollProcessesTask;
         private CancellationTokenSource processStatusCheckCancellationTokenSource;
         public const int normalCheckProcessStatusDelay = 10000;
@@ -56,6 +59,8 @@ namespace SolutionRunner.ToolWindows.ViewModels
                         DetachProjectCommand.NotifyCanExecuteChanged();
                         StopProjectCommand.NotifyCanExecuteChanged();
                         ShowProcessCommand.NotifyCanExecuteChanged();
+                        OpenSwaggerCommand.NotifyCanExecuteChanged();
+                        OpenMasswaggerCommand.NotifyCanExecuteChanged();
                     }
                 };
             }
@@ -70,7 +75,57 @@ namespace SolutionRunner.ToolWindows.ViewModels
             StopProjectCommand = new AsyncRelayCommand(StopProjectAsync, () => CanStopProject);
             ShowProcessCommand = new AsyncRelayCommand(ShowProcessAsync, () => CanStopProject);
             TryActivateProjectCommand = new AsyncRelayCommand(TryActivateProjectAsync);
+            OpenSwaggerCommand = new RelayCommand(OpenSwagger, () => CanOpenSwagger);
+            OpenMasswaggerCommand = new RelayCommand(OpenMasswagger, () => CanOpenMasswagger);
         }
+
+        public void OpenSwagger()
+        {
+            try
+            {
+                var projectDir = Path.GetDirectoryName(ProjectItem.SolutionProject.FullPath);
+                var launchSettingsPath = Path.Combine(projectDir, "Properties", "launchSettings.json");
+
+                if (File.Exists(launchSettingsPath))
+                {
+                    var jsonContent = File.ReadAllText(launchSettingsPath);
+                    var launchSettings = JObject.Parse(jsonContent);
+                    var applicationUrl = launchSettings["profiles"].First.First["applicationUrl"].ToString();
+                    var baseUrl = applicationUrl.Split(';')[0];
+                    var swaggerUrl = $"{baseUrl.TrimEnd('/')}/swagger";
+
+                    Process.Start(new System.Diagnostics.ProcessStartInfo(swaggerUrl) { UseShellExecute = true });
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+        public bool CanOpenSwagger => CanStopProject;
+
+        public void OpenMasswagger()
+        {
+            try
+            {
+                var projectDir = Path.GetDirectoryName(ProjectItem.SolutionProject.FullPath);
+                var launchSettingsPath = Path.Combine(projectDir, "Properties", "launchSettings.json");
+
+                if (File.Exists(launchSettingsPath))
+                {
+                    var jsonContent = File.ReadAllText(launchSettingsPath);
+                    var launchSettings = JObject.Parse(jsonContent);
+                    var applicationUrl = launchSettings["profiles"].First.First["applicationUrl"].ToString();
+                    var baseUrl = applicationUrl.Split(';')[0];
+                    var swaggerUrl = $"{baseUrl.TrimEnd('/')}/masswagger";
+
+                    Process.Start(new System.Diagnostics.ProcessStartInfo(swaggerUrl) { UseShellExecute = true });
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+        public bool CanOpenMasswagger => CanStopProject;
 
         private async Task RestartProjectAsync(CancellationToken cancellationToke)
         {

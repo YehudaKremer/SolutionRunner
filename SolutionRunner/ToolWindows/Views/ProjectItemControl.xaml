@@ -25,6 +25,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/SolutionRunner;component/ToolWindows/Styles/SharedResources.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/SolutionRunner;component/ToolWindows/Resources/ContextMenuResource.xaml" />
             </ResourceDictionary.MergedDictionaries>
             
             <Style x:Key="ReusableButtonStyle" TargetType="Button">
@@ -53,6 +54,43 @@
                     </Trigger>
                 </Style.Triggers>
             </Style>
+
+            <Style x:Key="CustomVSThemedMenuItemStyle" TargetType="MenuItem">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
+                                        <ColumnDefinition Width="13"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter x:Name="Icon" ContentSource="Icon" Margin="2,2,10,2" VerticalAlignment="Center" Opacity="1"/>
+                                    <ContentPresenter x:Name="HeaderHost" ContentSource="Header" Grid.Column="1" 
+                                        Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" VerticalAlignment="Center"/>
+                                    <ContentPresenter x:Name="InputGestureText" ContentSource="InputGestureText" Grid.Column="2" 
+                                        Margin="8,0,8,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="true">
+                                    <Setter Property="Background" TargetName="Border"
+                                            Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundGradientKey}}"/>
+                                    <Setter Property="BorderBrush" TargetName="Border" 
+                                            Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="false">
+                                    <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"/>
+                                    <Setter Property="Opacity" TargetName="Icon" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -65,12 +103,66 @@
             <Style TargetType="Grid">
                 <Setter Property="Background" Value="{Binding Background, ElementName=ProjectItemControlDesign}" />
                 <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="IsMouseOver" Value="True" />
+                            <Condition Property="ContextMenu.IsOpen" Value="False" />
+                        </MultiTrigger.Conditions>
                         <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:TreeViewColors.SelectedItemInactiveBrushKey}}" />
-                    </Trigger>
+                    </MultiTrigger>
+                    <DataTrigger Binding="{Binding ContextMenu.IsOpen, RelativeSource={RelativeSource Self}}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:TreeViewColors.SelectedItemInactiveBrushKey}}" />
+                    </DataTrigger>
                 </Style.Triggers>
             </Style>
         </Grid.Style>
+
+        <Grid.ContextMenu>
+            <ContextMenu x:Name="MainContextMenu" Style="{StaticResource VSThemedContextMenuStyle}">
+                <MenuItem Header="Start" Command="{Binding StartProjectCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
+                    <MenuItem.Icon>
+                        <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Run}"
+                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Stop" Command="{Binding StopProjectCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
+                    <MenuItem.Icon>
+                        <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Stop}"
+                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource VSThemedSeparatorStyle}"/>
+                <MenuItem Header="Attach" Command="{Binding AttachProjectCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
+                    <MenuItem.Icon>
+                        <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Online}"
+                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Detach" Command="{Binding DetachProjectCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
+                    <MenuItem.Icon>
+                        <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Disconnect}"
+                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource VSThemedSeparatorStyle}"/>
+                <MenuItem Header="Show Process" Command="{Binding ShowProcessCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
+                    <MenuItem.Icon>
+                        <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.JSHubApplication}"
+                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Open Swagger" Command="{Binding OpenSwaggerCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
+                    <MenuItem.Icon>
+                        <Image Width="16" Height="16" Source="{DynamicResource SwaggerImage}" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Open Masswagger" Command="{Binding OpenMasswaggerCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
+                    <MenuItem.Icon>
+                        <Image Width="16" Height="16" Source="{DynamicResource MasswaggerImage}" />
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+        </Grid.ContextMenu>
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="18"/>
