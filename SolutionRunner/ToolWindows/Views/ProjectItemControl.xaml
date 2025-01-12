@@ -122,33 +122,33 @@
                 <MenuItem Header="Start" Command="{Binding StartProjectCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
                     <MenuItem.Icon>
                         <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Run}"
-                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                                            theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BrushToColorConverter}}"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Stop" Command="{Binding StopProjectCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
                     <MenuItem.Icon>
                         <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Stop}"
-                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                                            theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BrushToColorConverter}}"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator Style="{StaticResource VSThemedSeparatorStyle}"/>
                 <MenuItem Header="Attach" Command="{Binding AttachProjectCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
                     <MenuItem.Icon>
                         <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Online}"
-                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                                            theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BrushToColorConverter}}"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Detach" Command="{Binding DetachProjectCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
                     <MenuItem.Icon>
                         <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Disconnect}"
-                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                                            theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BrushToColorConverter}}"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator Style="{StaticResource VSThemedSeparatorStyle}"/>
                 <MenuItem Header="Show Process" Command="{Binding ShowProcessCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
                     <MenuItem.Icon>
                         <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.JSHubApplication}"
-                    theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={StaticResource BrushToColorConverter}}"/>
+                                            theming:ImageThemingUtilities.ImageBackgroundColor="{Binding Background, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BrushToColorConverter}}"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Open Swagger" Command="{Binding OpenSwaggerCommand}" Style="{StaticResource CustomVSThemedMenuItemStyle}">
