@@ -1,6 +1,6 @@
-![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/YehudaK.SolutionRunner)
-![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/YehudaK.SolutionRunner)
-![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/stars/YehudaK.SolutionRunner)
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/YehudaK.SolutionRunner)](https://marketplace.visualstudio.com/items?itemName=YehudaK.SolutionRunner)
+[![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/YehudaK.SolutionRunner)](https://marketplace.visualstudio.com/items?itemName=YehudaK.SolutionRunner)
+[![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/stars/YehudaK.SolutionRunner)](https://marketplace.visualstudio.com/items?itemName=YehudaK.SolutionRunner)
 
 **SolutionRunner** is a Visual Studio extension that helps you quickly run common actions across solution projects from one place, reducing setup friction in multi-project workflows.
 
